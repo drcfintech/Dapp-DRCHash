@@ -7,26 +7,17 @@ const app = require("express")();
 const serverConfig = require("./config/serverConfig.json");
 const path = require("path");
 const http = require("http");
+
+// independent module to deal with web3 stuffs
+const web3Utils = require("./web3utils.js");
+
 // 模块：对http请求所带的数据进行解析  https://www.cnblogs.com/whiteMu/p/5986297.html
 const querystring = require("querystring");
 const contract = require("truffle-contract");
-const Web3 = require("web3");
 // 解决Error：Web3ProviderEngine does not support synchronous requests
 const Promise = require("bluebird");
-// 生成钱包
-//const HDWalletProvider = require("truffle-hdwallet-provider");
-const walletConfig = require("./config/walletConfig.json");
 // 签名之前构造rawTransaction用
 var Tx = require("ethereumjs-tx");
-
-const keystore = require(walletConfig.keystore);
-//console.log('keystore  ', keystore);
-
-const infura_url = {
-  mainnet: "https://mainnet.infura.io/v3/",
-  ropsten: "https://ropsten.infura.io/v3/",
-  rinkeby: "https://rinkeby.infura.io/v3/"
-};
 
 // 用户操作
 const operation = ["insertHash", "selectHash"];
@@ -42,8 +33,6 @@ const contractAT = HashDataCon_artifacts.networks["4"].address;
 const contractABI = HashDataCon_artifacts.abi;
 // 初始化合约实例
 let HashDataConContract;
-// 调用合约的账号
-let account;
 
 const GAS_LIMIT = 4700000; // default gas limit
 const SAFE_GAS_PRICE = 41; // default gas price (unit is gwei)
@@ -99,33 +88,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// 新建initWeb3Provider连接
-function initWeb3Provider() {
-  if (typeof web3 !== "undefined") {
-    web3 = new Web3(web3.currentProvider);
-  } else {
-    web3 = new Web3(
-      new Web3.providers.HttpProvider(
-        infura_url.rinkeby + walletConfig.infuraAPIkey
-      )
-    );
-  }
-
-  // 解决Error：TypeError: Cannot read property 'kdf' of undefined
-  account = web3.eth.accounts.decrypt(
-    JSON.parse(JSON.stringify(keystore).toLowerCase()),
-    walletConfig.password
-  );
-  web3.eth.defaultAccount = account.address;
-  console.log("web3.eth.defaultAccount : ", web3.eth.defaultAccount);
-
-  if (typeof web3.eth.getAccountsPromise === "undefined") {
-    //console.log('解决 Error: Web3ProviderEngine does not support synchronous requests.');
-    Promise.promisifyAll(web3.eth, {
-      suffix: "Promise"
-    });
-  }
-}
 
 // let gasPrice;
 let currentNonce = -1;
@@ -462,7 +424,7 @@ const sendTransaction = (rawTx, txType) => {
   });
 };
 
-let TxExecution = function(
+let TxExecution = function (
   contractAT,
   encodeData,
   resultCallback,
@@ -547,24 +509,15 @@ let TxExecution = function(
   getBalance(callback, dataObject);
 };
 
-let realValue = value => {
-  var temp = value.toFixed(7);
-  // web3.utils.toBN(requestObject.value).mul(wb3.utils.toBN(decimals.default));
-  return web3.utils
-    .toBN(Number.parseInt(temp * decimals.fixedWidth))
-    .mul(web3.utils.toBN(decimals.leftWidth))
-    .toString();
-};
-
 var Actions = {
   // 初始化：拿到web3提供的地址， 利用json文件生成合约··
-  start: function() {
+  start: function () {
     HashDataConContract = new web3.eth.Contract(contractABI, contractAT, {});
-    HashDataConContract.setProvider(web3.currentProvider);
+    HashDataConContract.setProvider(web3Utils.currentProvider);
   },
 
   // 往链上存数据
-  insertHash: function(data) {
+  insertHash: function (data) {
     let dataObject = data;
     let requestObject = dataObject.data;
 
@@ -701,7 +654,7 @@ var Actions = {
   },
 
   // 去链上查询结果
-  selectHash: function(data) {
+  selectHash: function (data) {
     let dataObject = data;
 
     HashDataConContract.methods
@@ -731,7 +684,7 @@ let qs;
 app.use((req, res, next) => {
   // 初始化socket连接
   initWeb3Provider();
-  req.on("data", function(chunk) {
+  req.on("data", function (chunk) {
     try {
       // 将前台传来的值，转回对象类型
       qs = querystring.parse(chunk);
@@ -780,7 +733,7 @@ app.use((req, res, next) => {
 // });
 
 let lastDid;
-app.post("/insertHash", function(req, res) {
+app.post("/insertHash", function (req, res) {
   if (qs.hash) {
     console.log("/doDeposit info: ", qs.hash);
     qs = JSON.parse(qs.hash);
@@ -806,7 +759,7 @@ app.post("/insertHash", function(req, res) {
   });
 });
 
-app.post("/selectHash", function(req, res) {
+app.post("/selectHash", function (req, res) {
   console.log("/selectHash", qs.hash);
   // 查询方法
   result = Actions.selectHash({
@@ -815,12 +768,11 @@ app.post("/selectHash", function(req, res) {
   });
 });
 
-app.listen(
-  {
+app.listen({
     host: serverConfig.serverHost,
     port: serverConfig.serverPort
   },
-  function() {
+  function () {
     // 初始化web3连接
     initWeb3Provider();
     // 初始化
