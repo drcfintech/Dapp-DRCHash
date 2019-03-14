@@ -4,7 +4,7 @@
  * 私钥加密，公钥验签
  * 参数  message: data(前64位) + sign(除去data的剩余数据)
  */
-const fs = require('fs');
+const fs = require('fs-extra');
 const crypto = require('crypto');
 
 module.exports = {
