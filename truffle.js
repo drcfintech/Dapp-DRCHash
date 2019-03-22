@@ -7,6 +7,13 @@ const walletConfig = require('./config/walletConfig.json');
 var infura_apikey = "9rWQxDtU4uAbAWdFFSAR";
 
 module.exports = {
+  solc: {
+    optimizer: {
+      enabled: true,
+      runs: 200
+    },
+    version: "0.5.6"
+  },
   networks: {
     development: {
       host: '127.0.0.1',
