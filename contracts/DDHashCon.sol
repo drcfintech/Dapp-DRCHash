@@ -5,20 +5,19 @@ import "./HashBaseCon.sol";
 
 
 /**
- * This contract will take charge of submitting file hash to blockchain
+ * This contract will take charge of submitting DD result hash to blockchain
  *
  */
-contract DRCFileHashCon is DRCHashBase {
-  struct FileInfo {
-    string fileName; // must have a value
-    string fileUrl; // could be empty
-    string author; // could be empty    
+contract DRCDDHashCon is DRCHashBase {
+  struct DDInfo {
+    mapping(string => string) ddersHashInfo; // must have a value
+    string[] dderNames; // could be empty
   }
 
-  mapping(string => FileInfo) private fileHashInfo;
+  mapping(string => DDInfo) private ddHashInfo;
 
-  event LogInsertFileHash(address indexed _operator, string _hash, FileInfo _fileInfo, bool _bool);
-  event LogDeleteFileHash(address indexed _operator, string _hash, FileInfo _fileInfo, bool _bool);
+  event LogInsertFileHash(address indexed _operator, string _hash, DDInfo _ddInfo, bool _bool);
+  event LogDeleteFileHash(address indexed _operator, string _hash, DDInfo _ddInfo, bool _bool);
 
   /**
    * @dev Constructor,not used just reserved

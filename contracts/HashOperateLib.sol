@@ -30,14 +30,14 @@ library HashOperateLib {
    *         _hash is input value of hash
    * @return bool,true is successful and false is failed
    */
-  function insertHash(Info storage _self, string _hash, address _saver, string _saverName) 
+  function insertHash(Info storage _self, string _hash, string _saverName) 
     internal 
     returns(bool) 
   {
     if (_self.hashInfo[_hash].saveTime > 0) {
       return false;
     } else {
-      _self.hashInfo[_hash].saver = _saver; // not msg.sender, we need the origin TX submitter;
+      _self.hashInfo[_hash].saver = msg.sender; // not msg.sender, we need the origin TX submitter;
       _self.hashInfo[_hash].saveTime = now;
       _self.hashInfo[_hash].saverName = _saverName;
       _self.hashLib.push(_hash);
