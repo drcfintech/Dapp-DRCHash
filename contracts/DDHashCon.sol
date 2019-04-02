@@ -10,14 +10,15 @@ import "./HashBaseCon.sol";
  */
 contract DRCDDHashCon is DRCHashBase {
   struct DDInfo {
-    mapping(string => string) ddersHashInfo; // must have a value
+    string ddTask;
+    mapping(string => string) ddersHashInfo; // could be empty
     string[] dderNames; // could be empty
   }
 
   mapping(string => DDInfo) private ddHashInfo;
 
-  event LogInsertFileHash(address indexed _operator, string _hash, DDInfo _ddInfo, bool _bool);
-  event LogDeleteFileHash(address indexed _operator, string _hash, DDInfo _ddInfo, bool _bool);
+  event LogInsertDDHash(address indexed _operator, string _hash, DDInfo _ddInfo, bool _bool);
+  event LogDeleteDDHash(address indexed _operator, string _hash, DDInfo _ddInfo, bool _bool);
 
   /**
    * @dev Constructor,not used just reserved
@@ -33,17 +34,17 @@ contract DRCDDHashCon is DRCHashBase {
   function insertHash(
     string _hash,  
     string _saverName, 
-    string _fileName,
-    string _fileUrl, 
-    string _author
+    string _ddTaskName,
+    string _dders, 
+    string _ddersHashStrs
   ) 
   public 
   onlyOwner 
   returns(bool) {
     bool res = hashInfo.insertHash(_hash, _saverName);
     require(res);
-    fileHashInfo[_hash] = FileInfo(_fileName, _fileUrl, _author); 
-    emit LogInsertFileHash(msg.sender, _hash, fileHashInfo[_hash], res);
+    ddHashInfo[_hash] = FileInfo(_fileName, _fileUrl, _author); 
+    emit LogInsertDDHash(msg.sender, _hash, ddHashInfo[_hash], res);
 
     return true;
   }
@@ -62,7 +63,7 @@ contract DRCDDHashCon is DRCHashBase {
     FileInfo memory fileInfo;
 
     (selectRes, exInfo.saver, exInfo.saverName, exInfo.saveTime) = hashInfo.selectHash(_hash);
-    fileInfo = fileHashInfo[_hash];
+    fileInfo = ddHashInfo[_hash];
 
     return (
       selectRes, 
@@ -93,8 +94,8 @@ contract DRCDDHashCon is DRCHashBase {
 
     bool res = hashInfo.deleteHash(_hash);
     require(res);    
-    delete fileHashInfo[_hash];
-    emit LogDeleteFileHash(_deleter, _hash, fileHashInfo[_hash], res);
+    delete ddHashInfo[_hash];
+    emit LogDeleteDDHash(_deleter, _hash, ddHashInfo[_hash], res);
 
     return true;
   }
