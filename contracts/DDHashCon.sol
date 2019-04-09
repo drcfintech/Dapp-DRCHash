@@ -2,6 +2,7 @@ pragma solidity >=0.4.22 <0.7.0;
 
 
 import "./HashBaseCon.sol";
+import "../solidity-lib/utils/StringUtils.sol";
 
 
 /**
@@ -9,6 +10,8 @@ import "./HashBaseCon.sol";
  *
  */
 contract DRCDDHashCon is DRCHashBase {
+  using StringUtils for string;
+
   struct DDInfo {
     string ddTask;
     mapping(string => string) ddersHashInfo; // could be empty
@@ -26,6 +29,21 @@ contract DRCDDHashCon is DRCHashBase {
   constructor() public {
   }
 
+  function insertDDers(string _dders, string _ddersHashStrs) internal returns(bool) {
+    require(_dders.length == _ddersHashStrs.length);
+
+    if (_dders.length == 0 || _ddersHashStrs.length == 0) {
+      return false; // no dders or data errors
+    }
+
+    string memory seperators = ",";
+    int ind = _dders.indexOf(seperators);
+    while (ind != -1) {
+
+    }
+
+  }
+
   /**
    * @dev insertHash,insert hash into contract
    * @param _hash is input value of hash
@@ -35,15 +53,16 @@ contract DRCDDHashCon is DRCHashBase {
     string _hash,  
     string _saverName, 
     string _ddTaskName,
-    string _dders, 
-    string _ddersHashStrs
+    bytes _dders, 
+    bytes _ddersHashStrs
   ) 
   public 
   onlyOwner 
   returns(bool) {
     bool res = hashInfo.insertHash(_hash, _saverName);
     require(res);
-    ddHashInfo[_hash] = FileInfo(_fileName, _fileUrl, _author); 
+    ddHashInfo[_hash].ddTask = _ddTaskName; 
+    ddHashInfo[_hash].dderNames = abi.decode(_dders, (string[128]));
     emit LogInsertDDHash(msg.sender, _hash, ddHashInfo[_hash], res);
 
     return true;
