@@ -29,21 +29,14 @@ contract DRCFileHashCon is DRCHashBase {
   /**
    * @dev insertHash,insert hash into contract
    * @param _hash is input value of hash
+   * @param _uploadedData is the additional data being uploaded to the contract
    * @return bool,true is successful and false is failed
    */
-  function insertHash(
-    string _hash,  
-    string _saverName, 
-    string _fileName,
-    string _fileUrl, 
-    string _author
-  ) 
-  public 
-  onlyOwner 
-  returns(bool) {
+  function insertHash(string _hash, bytes _uploadedData) public onlyOwner returns (bool) {
+    (string memory _saverName, FileInfo memory _fileInfo) = abi.decode(_uploadedData, (string, FileInfo));
     bool res = hashInfo.insertHash(_hash, _saverName);
     require(res);
-    fileHashInfo[_hash] = FileInfo(_fileName, _fileUrl, _author); 
+    fileHashInfo[_hash] = _fileInfo; 
     emit LogInsertFileHash(msg.sender, _hash, fileHashInfo[_hash], res);
 
     return true;

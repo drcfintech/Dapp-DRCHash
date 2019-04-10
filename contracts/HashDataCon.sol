@@ -23,7 +23,8 @@ contract DRCHashDataCon is DRCHashBase {
    * @param _saverName is the name of the guy which submit the hash value
 	 * @return bool,true is successful and false is failed
 	 */
-  function insertHash(string _hash, string _saverName) public returns (bool) {
+  function insertHash(string _hash, bytes _uploadedData) public onlyOwner returns (bool) {
+    string memory _saverName = abi.decode(_uploadedData, (string));
     bool res = hashInfo.insertHash(_hash, _saverName);
     require(res);
     emit LogInsertHash(msg.sender, _hash, res);
@@ -35,8 +36,9 @@ contract DRCHashDataCon is DRCHashBase {
 	 * @param _hash is input value of hash
 	 * @return true/false,saver,save time
 	 */
-  function selectHash(string _hash) public view returns (bool, address, string, uint256) {
-    return (hashInfo.selectHash(_hash));
+  function selectHash(string _hash) public view returns (bool, address, bytes, uint256) {
+    (bool res, address saver, string memory saverName, uint256 saveTime) = hashInfo.selectHash(_hash);
+    return (res, saver, bytes(saverName), saveTime);
   } 
     
 	/**

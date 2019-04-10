@@ -32,8 +32,9 @@ library HashOperateLib {
    */
   function insertHash(Info storage _self, string _hash, string _saverName) 
     internal 
-    returns(bool) 
+    returns (bool) 
   {
+    require(!_hash.equal(""));
     if (_self.hashInfo[_hash].saveTime > 0) {
       return false;
     } else {
@@ -52,7 +53,8 @@ library HashOperateLib {
    *         _hash is input value of hash
    * @return bool,true is successful and false is failed
    */
-  function deleteHash(Info storage _self, string _hash) internal returns(bool) {
+  function deleteHash(Info storage _self, string _hash) internal returns (bool) {
+    require(!_hash.equal(""));
     if (_self.hashInfo[_hash].saveTime > 0) {
       delete _self.hashInfo[_hash];
       removeHash(_self, _hash);
@@ -71,7 +73,7 @@ library HashOperateLib {
   function selectHash(Info storage _self, string _hash) 
     internal 
     view 
-    returns(bool, address, string, uint256) 
+    returns (bool, address, string, uint256) 
   {
     if (_self.hashInfo[_hash].saveTime > 0) {
       return (true, 
@@ -88,7 +90,7 @@ library HashOperateLib {
    *
    * @param _hashStr the account address in the list
    */
-  function removeHash(Info storage _self, string _hashStr) internal returns(bool) {
+  function removeHash(Info storage _self, string _hashStr) internal returns (bool) {
     uint i = 0;
     for (; i < _self.hashLib.length; i = i.add(1)) {
       if (_self.hashLib[i].equal(_hashStr)) 

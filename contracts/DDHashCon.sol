@@ -29,7 +29,7 @@ contract DRCDDHashCon is DRCHashBase {
   constructor() public {
   }
 
-  function insertDDers(string _dders, string _ddersHashStrs) internal returns(bool) {
+  function insertDDers(string _dders, string _ddersHashStrs) internal returns (bool) {
     require(_dders.length == _ddersHashStrs.length);
 
     if (_dders.length == 0 || _ddersHashStrs.length == 0) {
@@ -58,7 +58,7 @@ contract DRCDDHashCon is DRCHashBase {
   ) 
   public 
   onlyOwner 
-  returns(bool) {
+  returns (bool) {
     bool res = hashInfo.insertHash(_hash, _saverName);
     require(res);
     ddHashInfo[_hash].ddTask = _ddTaskName; 
@@ -76,7 +76,7 @@ contract DRCDDHashCon is DRCHashBase {
   function selectHash(string _hash) 
   public 
   view 
-  returns(bool, address, string, uint256, string, string, string) {
+  returns (bool, address, string, uint256, string, string, string) {
     bool selectRes;
     HashOperateLib.ExInfo memory exInfo;
     FileInfo memory fileInfo;
@@ -100,7 +100,7 @@ contract DRCDDHashCon is DRCHashBase {
    * @param _hash is input value of hash
    * @return bool,true is successful and false is failed
    */
-  function deleteHash(string _hash, address _deleter) public onlyOwner returns(bool) {
+  function deleteHash(string _hash, address _deleter) public onlyOwner returns (bool) {
     require(_deleter != address(0));
 
     bool selectRes;
