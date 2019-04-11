@@ -39,7 +39,7 @@ contract DRCHashBase is Ownable {
 	 * @param _hash is input value of hash
 	 * @return true/false,saver,uploadedData,save time
 	 */
-  function selectHash(string _hash) public view returns (bool, address, bytes, uint256);
+  function selectHash(string _hash) public view returns (bool, address, bytes, uint256, string);
     
 	/**
 	 * @dev deleteHash,delete hash into contract

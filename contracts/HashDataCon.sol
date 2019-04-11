@@ -36,9 +36,15 @@ contract DRCHashDataCon is DRCHashBase {
 	 * @param _hash is input value of hash
 	 * @return true/false,saver,save time
 	 */
-  function selectHash(string _hash) public view returns (bool, address, bytes, uint256) {
-    (bool res, address saver, string memory saverName, uint256 saveTime) = hashInfo.selectHash(_hash);
-    return (res, saver, bytes(saverName), saveTime);
+  function selectHash(string _hash) public view returns (bool, address, bytes, uint256, string) {
+    (
+      bool res, 
+      address saver, 
+      string memory saverName, 
+      uint256 saveTime, 
+      string memory txHash
+    ) = hashInfo.selectHash(_hash);
+    return (res, saver, abi.encode(saverName), saveTime, txHash);
   } 
     
 	/**
@@ -48,8 +54,8 @@ contract DRCHashDataCon is DRCHashBase {
 	 */
   function deleteHash(string _hash) public onlyOwner returns (bool) {
     bool res = hashInfo.deleteHash(_hash);
-    require(res);
     emit LogDeleteHash(msg.sender, _hash, res);
+
     return res;
   } 
 

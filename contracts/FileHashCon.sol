@@ -47,25 +47,19 @@ contract DRCFileHashCon is DRCHashBase {
    * @param _hash is input value of hash
    * @return true/false,saver,save time
    */
-  function selectHash(string _hash) 
-  public 
-  view 
-  returns(bool, address, string, uint256, string, string, string) {
+  function selectHash(string _hash) public view returns(bool, address, bytes, uint256, string) {
     bool selectRes;
     HashOperateLib.ExInfo memory exInfo;
-    FileInfo memory fileInfo;
 
-    (selectRes, exInfo.saver, exInfo.saverName, exInfo.saveTime) = hashInfo.selectHash(_hash);
-    fileInfo = fileHashInfo[_hash];
+    (selectRes, exInfo.saver, exInfo.saverName, exInfo.saveTime, exInfo.txHash) = hashInfo.selectHash(_hash);
+    bytes memory selectData = abi.encodePacked(exInfo.saverName, fileHashInfo[_hash]);
 
     return (
       selectRes, 
       exInfo.saver, 
-      exInfo.saverName, 
-      exInfo.saveTime, 
-      fileInfo.fileName,
-      fileInfo.fileUrl,
-      fileInfo.author
+      selectData,
+      exInfo.saveTime,
+      exInfo.txHash
     );
   }
 
@@ -74,23 +68,13 @@ contract DRCFileHashCon is DRCHashBase {
    * @param _hash is input value of hash
    * @return bool,true is successful and false is failed
    */
-  function deleteHash(string _hash, address _deleter) public onlyOwner returns(bool) {
-    require(_deleter != address(0));
-
-    bool selectRes;
-    address origSaver;
-    string memory origSaverName;
-    uint256 timeStamp;
-
-    (selectRes, origSaver, origSaverName, timeStamp) = hashInfo.selectHash(_hash);
-    require(selectRes);
-
+  function deleteHash(string _hash) public onlyOwner returns(bool) {
     bool res = hashInfo.deleteHash(_hash);
-    require(res);    
-    delete fileHashInfo[_hash];
-    emit LogDeleteFileHash(_deleter, _hash, fileHashInfo[_hash], res);
+    emit LogDeleteFileHash(msg.sender, _hash, fileHashInfo[_hash], res);
+    if (res) 
+      delete fileHashInfo[_hash];
 
-    return true;
+    return res;
   }
 
 }
