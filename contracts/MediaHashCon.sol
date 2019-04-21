@@ -8,17 +8,17 @@ import "./HashBaseCon.sol";
  * This contract will take charge of submitting file hash to blockchain
  *
  */
-contract DRCFileHashCon is DRCHashBase {
-  struct FileInfo {
-    string fileName; // must have a value
-    string fileUrl; // could be empty
-    string author; // could be empty    
+contract DRCMediaHashCon is DRCHashBase {
+  struct MediaInfo {
+    string mediaName; // must have a value
+    string mediaUrl; // must have
+    string author; // must have    
   }
 
-  mapping(string => FileInfo) private fileHashInfo;
+  mapping(string => MediaInfo) private mediaHashInfo;
 
-  event LogInsertFileHash(address indexed _operator, string _hash, FileInfo _fileInfo, bool _bool);
-  event LogDeleteFileHash(address indexed _operator, string _hash, FileInfo _fileInfo, bool _bool);
+  event LogInsertFileHash(address indexed _operator, string _hash, MediaInfo _mediaInfo, bool _bool);
+  event LogDeleteFileHash(address indexed _operator, string _hash, MediaInfo _mediaInfo, bool _bool);
 
   /**
    * @dev Constructor,not used just reserved
@@ -34,11 +34,11 @@ contract DRCFileHashCon is DRCHashBase {
    */
   function insertHash(string _hash, bytes _uploadedData) public onlyOwner returns (bool) {
     require(!_hash.equal(""));
-    (string memory _saverName, FileInfo memory _fileInfo) = abi.decode(_uploadedData, (string, FileInfo));
+    (string memory _saverName, MediaInfo memory _mediaInfo) = abi.decode(_uploadedData, (string, MediaInfo));
     bool res = hashInfo.insertHash(_hash, _saverName);
     require(res);
-    fileHashInfo[_hash] = _fileInfo; 
-    emit LogInsertFileHash(msg.sender, _hash, fileHashInfo[_hash], res);
+    mediaHashInfo[_hash] = _mediaInfo; 
+    emit LogInsertFileHash(msg.sender, _hash, mediaHashInfo[_hash], res);
 
     return true;
   }
@@ -54,7 +54,7 @@ contract DRCFileHashCon is DRCHashBase {
 
     (selectRes, exInfo.saver, exInfo.saverName, exInfo.saveTime) = hashInfo.selectHash(_hash);
     string memory selectTxHash = getTxIdByHash(_hash);
-    bytes memory selectData = abi.encodePacked(exInfo.saverName, fileHashInfo[_hash]);
+    bytes memory selectData = abi.encodePacked(exInfo.saverName, mediaHashInfo[_hash]);
 
     return (
       selectRes, 
@@ -72,9 +72,9 @@ contract DRCFileHashCon is DRCHashBase {
    */
   function deleteHash(string _hash) public onlyOwner returns(bool) {
     bool res = hashInfo.deleteHash(_hash);
-    emit LogDeleteFileHash(msg.sender, _hash, fileHashInfo[_hash], res);
+    emit LogDeleteFileHash(msg.sender, _hash, mediaHashInfo[_hash], res);
     if (res) 
-      delete fileHashInfo[_hash];
+      delete mediaHashInfo[_hash];
 
     return res;
   }

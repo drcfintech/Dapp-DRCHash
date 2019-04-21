@@ -66,7 +66,8 @@ contract DRCDDHashCon is DRCHashBase {
     bool selectRes;
     HashOperateLib.ExInfo memory exInfo;
 
-    (selectRes, exInfo.saver, exInfo.saverName, exInfo.saveTime, exInfo.txHash) = hashInfo.selectHash(_hash);
+    (selectRes, exInfo.saver, exInfo.saverName, exInfo.saveTime) = hashInfo.selectHash(_hash);
+    string memory selectTxHash = getTxIdByHash(_hash);
 
     uint len = ddHashInfo[_hash].dders.length;
     string[128] memory ddersName;
@@ -90,7 +91,7 @@ contract DRCDDHashCon is DRCHashBase {
       exInfo.saver, 
       selectData,
       exInfo.saveTime,
-      exInfo.txHash
+      selectTxHash
     );
   }
 

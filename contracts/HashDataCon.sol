@@ -24,6 +24,7 @@ contract DRCHashDataCon is DRCHashBase {
 	 * @return bool,true is successful and false is failed
 	 */
   function insertHash(string _hash, bytes _uploadedData) public onlyOwner returns (bool) {
+    require(!_hash.equal(""));
     string memory _saverName = abi.decode(_uploadedData, (string));
     bool res = hashInfo.insertHash(_hash, _saverName);
     require(res);
@@ -41,9 +42,10 @@ contract DRCHashDataCon is DRCHashBase {
       bool res, 
       address saver, 
       string memory saverName, 
-      uint256 saveTime, 
-      string memory txHash
+      uint256 saveTime
     ) = hashInfo.selectHash(_hash);
+    
+    string memory txHash = getTxIdByHash(_hash);
     return (res, saver, abi.encode(saverName), saveTime, txHash);
   } 
     
