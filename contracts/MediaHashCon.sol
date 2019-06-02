@@ -9,16 +9,38 @@ import "./HashBaseCon.sol";
  *
  */
 contract DRCMediaHashCon is DRCHashBase {
+  enum MediaType { 
+    ARTICLE, 
+    AUDIO, 
+    VIDEO 
+  }
+
   struct MediaInfo {
     string mediaName; // must have a value
     string mediaUrl; // must have
-    string author; // must have    
+    string author; // must have
+    MediaType t; // must have    
   }
 
   mapping(string => MediaInfo) private mediaHashInfo;
 
-  event LogInsertFileHash(address indexed _operator, string _hash, MediaInfo _mediaInfo, bool _bool);
-  event LogDeleteFileHash(address indexed _operator, string _hash, MediaInfo _mediaInfo, bool _bool);
+  event LogInsertMediaHash(
+    address indexed _operator, 
+    string _hash, 
+    string _mediaName, 
+    string _mediaUrl, 
+    string _mediaType,
+    bool _bool
+  );
+
+  event LogDeleteMediaHash(
+    address indexed _operator, 
+    string _hash, 
+    string _mediaName, 
+    string _mediaUrl,
+    string _mediaType, 
+    bool _bool
+  );
 
   /**
    * @dev Constructor,not used just reserved
@@ -32,13 +54,27 @@ contract DRCMediaHashCon is DRCHashBase {
    * @param _uploadedData is the additional data being uploaded to the contract
    * @return bool,true is successful and false is failed
    */
-  function insertHash(string _hash, bytes _uploadedData) public onlyOwner returns (bool) {
+  function insertHash(string memory _hash, bytes memory _uploadedData) 
+    public 
+    onlyOwner 
+    returns (bool) 
+  {
     require(!_hash.equal(""));
-    (string memory _saverName, MediaInfo memory _mediaInfo) = abi.decode(_uploadedData, (string, MediaInfo));
-    bool res = hashInfo.insertHash(_hash, _saverName);
+
+    (string memory _saverName, string memory _mediaName, string memory _mediaUrl, string memory _author, uint256 _mediaType) 
+      = abi.decode(_uploadedData, (string, string, string, string, uint256));
+
+    bool res = hashInfoLib.insertHash(_hash, _saverName);
     require(res);
-    mediaHashInfo[_hash] = _mediaInfo; 
-    emit LogInsertFileHash(msg.sender, _hash, mediaHashInfo[_hash], res);
+    mediaHashInfo[_hash] = MediaInfo(_mediaName, _mediaUrl, _author, MediaType(_mediaType)); 
+    emit LogInsertMediaHash(
+      msg.sender, 
+      _hash, 
+      mediaHashInfo[_hash].mediaName,
+      mediaHashInfo[_hash].mediaUrl, 
+      getMediaTypeStr(mediaHashInfo[_hash].t),
+      res
+    );
 
     return true;
   }
@@ -48,13 +84,23 @@ contract DRCMediaHashCon is DRCHashBase {
    * @param _hash is input value of hash
    * @return true/false,saver,save time
    */
-  function selectHash(string _hash) public view returns(bool, address, bytes, uint256, string) {
+  function selectHash(string memory _hash) 
+    public 
+    view 
+    returns (bool, address, bytes memory, uint256, string memory) 
+  {
     bool selectRes;
     HashOperateLib.ExInfo memory exInfo;
 
-    (selectRes, exInfo.saver, exInfo.saverName, exInfo.saveTime) = hashInfo.selectHash(_hash);
+    (selectRes, exInfo.saver, exInfo.saverName, exInfo.saveTime) = hashInfoLib.selectHash(_hash);
     string memory selectTxHash = getTxIdByHash(_hash);
-    bytes memory selectData = abi.encodePacked(exInfo.saverName, mediaHashInfo[_hash]);
+    bytes memory selectData = abi.encodePacked(
+      exInfo.saverName, 
+      mediaHashInfo[_hash].mediaName,
+      mediaHashInfo[_hash].mediaUrl,
+      mediaHashInfo[_hash].author,
+      uint256(mediaHashInfo[_hash].t)
+    );
 
     return (
       selectRes, 
@@ -70,13 +116,33 @@ contract DRCMediaHashCon is DRCHashBase {
    * @param _hash is input value of hash
    * @return bool,true is successful and false is failed
    */
-  function deleteHash(string _hash) public onlyOwner returns(bool) {
-    bool res = hashInfo.deleteHash(_hash);
-    emit LogDeleteFileHash(msg.sender, _hash, mediaHashInfo[_hash], res);
+  function deleteHash(string memory _hash) public onlyOwner returns (bool) {
+    bool res = hashInfoLib.deleteHash(_hash);
     if (res) 
       delete mediaHashInfo[_hash];
 
+    emit LogDeleteMediaHash(
+      msg.sender, 
+      _hash, 
+      mediaHashInfo[_hash].mediaName,
+      mediaHashInfo[_hash].mediaUrl, 
+      getMediaTypeStr(mediaHashInfo[_hash].t),
+      res
+    );
+
     return res;
+  }
+
+  function getMediaTypeStr(MediaType t) private pure returns (string memory) {
+    if (t == MediaType.ARTICLE) {
+      return "Article";
+    } else if (t == MediaType.AUDIO) {
+      return "Audio";
+    } else if (t == MediaType.VIDEO) {
+      return "Video";
+    } else {
+      return "";
+    }
   }
 
 }

@@ -14,19 +14,23 @@ contract DRCHashDataCon is DRCHashBase {
 	/**
 	 * @dev Constructor,not used just reserved
 	 */
-  function DRCHashDataCon() public {
+  constructor() public {
   }
 	
 	/**
 	 * @dev insertHash,insert hash into contract
 	 * @param _hash is input value of hash
-   * @param _saverName is the name of the guy which submit the hash value
+   * @param _uploadedData is the uploaded value on to the blockchain
 	 * @return bool,true is successful and false is failed
 	 */
-  function insertHash(string _hash, bytes _uploadedData) public onlyOwner returns (bool) {
+  function insertHash(string memory _hash, bytes memory _uploadedData) 
+    public 
+    onlyOwner 
+    returns (bool) 
+  {
     require(!_hash.equal(""));
     string memory _saverName = abi.decode(_uploadedData, (string));
-    bool res = hashInfo.insertHash(_hash, _saverName);
+    bool res = hashInfoLib.insertHash(_hash, _saverName);
     require(res);
     emit LogInsertHash(msg.sender, _hash, res);
     return res;
@@ -37,13 +41,17 @@ contract DRCHashDataCon is DRCHashBase {
 	 * @param _hash is input value of hash
 	 * @return true/false,saver,save time
 	 */
-  function selectHash(string _hash) public view returns (bool, address, bytes, uint256, string) {
+  function selectHash(string memory _hash) 
+    public 
+    view 
+    returns (bool, address, bytes memory, uint256, string memory) 
+  {
     (
       bool res, 
       address saver, 
       string memory saverName, 
       uint256 saveTime
-    ) = hashInfo.selectHash(_hash);
+    ) = hashInfoLib.selectHash(_hash);
     
     string memory txHash = getTxIdByHash(_hash);
     return (res, saver, abi.encode(saverName), saveTime, txHash);
@@ -54,8 +62,8 @@ contract DRCHashDataCon is DRCHashBase {
 	 * @param _hash is input value of hash
 	 * @return bool,true is successful and false is failed
 	 */
-  function deleteHash(string _hash) public onlyOwner returns (bool) {
-    bool res = hashInfo.deleteHash(_hash);
+  function deleteHash(string memory _hash) public onlyOwner returns (bool) {
+    bool res = hashInfoLib.deleteHash(_hash);
     emit LogDeleteHash(msg.sender, _hash, res);
 
     return res;

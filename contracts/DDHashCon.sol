@@ -3,6 +3,7 @@ pragma solidity >=0.4.22 <0.7.0;
 
 import "./HashBaseCon.sol";
 import "../solidity-lib/utils/StringUtils.sol";
+import "../solidity-stringutils/src/strings.sol";
 
 
 /**
@@ -11,11 +12,17 @@ import "../solidity-lib/utils/StringUtils.sol";
  */
 contract DRCDDHashCon is DRCHashBase {
   using StringUtils for string;
+  using strings for *;
 
   struct DDInfo {
     string ddTask;
     mapping(string => string) ddersHashInfo; // could be empty
     string[] dderNames; // could be empty
+  }
+
+  struct StrList {
+    uint len;
+    string[] strs;
   }
 
   mapping(string => DDInfo) private ddHashInfo;
@@ -29,28 +36,48 @@ contract DRCDDHashCon is DRCHashBase {
   constructor() public {
   }
 
+  // function splitStrs(string memory _orig, string memory _spliter, string[] storage outStrs) internal returns (bool) {
+  //   strings.slice memory origSlices = _orig.toSlice();
+  //   strings.slice memory delim = _spliter.toSlice();
+    
+  //   for(uint i = 0; i < outStrs.length; i = i.add(1)) {
+  //     outStrs[i] = origSlices.split(delim).toString();
+  //   }
+
+  //   return true;
+  // }
+
   /**
    * @dev insertHash,insert hash into contract
    * @param _hash is input value of hash
    * @param _uploadedData is the additional data being uploaded to the contract
    * @return bool,true is successful and false is failed
    */
-  function insertHash(string _hash, bytes _uploadedData) public onlyOwner returns (bool) {
+  function insertHash(string memory _hash, bytes memory _uploadedData) 
+    public 
+    onlyOwner 
+    returns (bool) 
+  {
     (
       string memory _saverName, 
       string memory _ddTaskName,
       uint256 ddersNum,
-      string[128] memory dders,
-      string[128] memory ddersHash
-    ) = abi.decode(_uploadedData, (string, string, uint256, string[128], string[128]));
+      string memory dders,
+      string memory ddersHashStrs
+    ) = abi.decode(_uploadedData, (string, string, uint256, string, string));
 
-    bool res = hashInfo.insertHash(_hash, _saverName);
+    bool res = hashInfoLib.insertHash(_hash, _saverName);
     require(res);
     ddHashInfo[_hash].ddTask = _ddTaskName; 
 
-    for (int i = 0; i < ddersNum; i++) {
-      ddHashInfo[_hash].dderNames.push(dders[i]);
-      ddHashInfo[_hash].dderNames[dders[i]] = ddersHash[i];
+    strings.slice memory ddersSlice = dders.toSlice();
+    strings.slice memory ddersHashSlice = ddersHashStrs.toSlice();
+    strings.slice memory delim = ",".toSlice();
+
+    for (uint i = 0; i < ddersNum; i = i.add(1)) {
+      string memory tmpDDer = ddersSlice.split(delim).toString();
+      ddHashInfo[_hash].dderNames.push(tmpDDer);
+      ddHashInfo[_hash].ddersHashInfo[tmpDDer] = ddersHashSlice.split(delim).toString();
     }
 
     emit LogInsertDDHash(msg.sender, _hash, ddHashInfo[_hash].ddTask, res);
@@ -62,28 +89,36 @@ contract DRCDDHashCon is DRCHashBase {
    * @param _hash is input value of hash
    * @return true/false,saver,save time
    */
-  function selectHash(string _hash) public view returns (bool, address, bytes, uint256, string) {
+  function selectHash(string memory _hash) 
+    public 
+    view 
+    returns (bool, address, bytes memory, uint256, string memory) 
+  {
     bool selectRes;
     HashOperateLib.ExInfo memory exInfo;
 
-    (selectRes, exInfo.saver, exInfo.saverName, exInfo.saveTime) = hashInfo.selectHash(_hash);
+    (selectRes, exInfo.saver, exInfo.saverName, exInfo.saveTime) = hashInfoLib.selectHash(_hash);
     string memory selectTxHash = getTxIdByHash(_hash);
 
-    uint len = ddHashInfo[_hash].dders.length;
-    string[128] memory ddersName;
-    string[128] memory ddersHash;
+    uint len = ddHashInfo[_hash].dderNames.length;
+    strings.slice[] memory ddersNameList = new strings.slice[](len);
+    strings.slice[] memory ddersHashList = new strings.slice[](len);
 
-    for (int i = 0; i < len; i++) {
-      ddersName[i] = ddHashInfo[_hash].dders[i];
-      ddersHash[i] = ddHashInfo[_hash].ddersHashInfo[ddersName[i]];
+    string memory tempDDerName;
+    for(uint i = 0; i < len; i = i.add(1)) {
+      tempDDerName = ddHashInfo[_hash].dderNames[i];
+      ddersNameList[i] = tempDDerName.toSlice();
+      ddersHashList[i] = ddHashInfo[_hash].ddersHashInfo[tempDDerName].toSlice();
     }
+    // string memory ddersNameStr = ",".toSlice().join(ddersNameList);
+    // string memory ddersHashStr = ",".toSlice().join(ddersHashList);
 
     bytes memory selectData = abi.encodePacked(
       exInfo.saverName, 
       ddHashInfo[_hash].ddTask, 
-      ddHashInfo[_hash].dders.length,
-      ddersName,
-      ddersHash
+      len,
+      ",".toSlice().join(ddersNameList),
+      ",".toSlice().join(ddersHashList)
     );
 
     return (
@@ -100,12 +135,12 @@ contract DRCDDHashCon is DRCHashBase {
    * @param _hash is input value of hash
    * @return bool,true is successful and false is failed
    */
-  function deleteHash(string _hash) public onlyOwner returns (bool) {
-    bool res = hashInfo.deleteHash(_hash);
-    emit LogDeleteDDHash(msg.sender, _hash, ddHashInfo[_hash], res);
-
+  function deleteHash(string memory _hash) public onlyOwner returns (bool) {
+    bool res = hashInfoLib.deleteHash(_hash);
     if (res) 
       delete ddHashInfo[_hash];
+      
+    emit LogDeleteDDHash(msg.sender, _hash, ddHashInfo[_hash].ddTask, res);
 
     return res;
   }

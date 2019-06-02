@@ -2,6 +2,7 @@ pragma solidity >=0.4.22 <0.7.0;
 
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../solidity-lib/utils/StringUtils.sol";
 
 
 /**
@@ -10,6 +11,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
  */
 library HashOperateLib {
   using SafeMath for uint256;
+  using StringUtils for string;
 
   struct ExInfo {
     address saver;
@@ -28,7 +30,7 @@ library HashOperateLib {
    * @param  _hash is input value of hash
    * @return bool,true is successful and false is failed
    */
-  function insertHash(Info storage _self, string _hash, string _saverName) 
+  function insertHash(Info storage _self, string memory _hash, string memory _saverName) 
     internal 
     returns (bool) 
   {
@@ -50,7 +52,7 @@ library HashOperateLib {
    *         _hash is input value of hash
    * @return bool,true is successful and false is failed
    */
-  function deleteHash(Info storage _self, string _hash) internal returns (bool) {
+  function deleteHash(Info storage _self, string memory _hash) internal returns (bool) {
     require(!_hash.equal(""));
     if (_self.hashInfo[_hash].saveTime > 0) {
       delete _self.hashInfo[_hash];
@@ -67,10 +69,10 @@ library HashOperateLib {
    *         _hash is input value of hash
    * @return true/false,saver,save time
    */
-  function selectHash(Info storage _self, string _hash) 
+  function selectHash(Info storage _self, string memory _hash) 
     internal 
     view 
-    returns (bool, address, string, uint256) 
+    returns (bool, address, string memory, uint256) 
   {
     if (_self.hashInfo[_hash].saveTime > 0) {
       return (
@@ -90,8 +92,22 @@ library HashOperateLib {
    *         _ind is input value of the index
    * @return string, the hash string
    */
-  function getHashByInd(Info storage _self, uint _ind) internal view returns (string) {
+  function getHashByInd(Info storage _self, uint _ind) internal view returns (string memory) {
     return (_self.hashLib[_ind]);
+  }
+
+  /**
+   * @dev getHashByInd,get one hash string by its index
+   * @param  _self is where the data will be saved
+   *         _ind is input value of the index
+   * @return string, the hash string
+   */
+  function isHashExisted(Info storage _self, string memory _hash) 
+    internal 
+    view 
+    returns (bool) 
+  {
+    return (_self.hashInfo[_hash].saveTime > 0);
   }
 
   /**
@@ -99,7 +115,7 @@ library HashOperateLib {
    *
    * @param _hashStr the account address in the list
    */
-  function removeHash(Info storage _self, string _hashStr) internal returns (bool) {
+  function removeHash(Info storage _self, string memory _hashStr) internal returns (bool) {
     uint i = 0;
     for (; i < _self.hashLib.length; i = i.add(1)) {
       if (_self.hashLib[i].equal(_hashStr)) 
