@@ -34,7 +34,7 @@ const contractABI = HashDataCon_artifacts.abi;
 // 初始化合约实例
 let HashDataConContract;
 
-const GAS_LIMIT = 4700000; // default gas limit
+const GAS_LIMIT = 6721975; // default gas limit
 const SAFE_GAS_PRICE = 41; // default gas price (unit is gwei)
 const ADDR_ZERO = "0x0000000000000000000000000000000000000000";
 const gasPricePromote = {
@@ -175,7 +175,7 @@ const getGasPrice = () => {
 };
 
 // 获取estimated gasLimit
-const getGasLimit = callObject => {
+const getGasLimit = (callObject) => {
   return new Promise((resolve, reject) => {
     const handle = setInterval(() => {
       web3.eth.estimateGas(callObject, (error, result) => {
@@ -424,7 +424,7 @@ const sendTransaction = (rawTx, txType) => {
   });
 };
 
-let TxExecution = function (
+let TxExecution = function(
   contractAT,
   encodeData,
   resultCallback,
@@ -511,13 +511,13 @@ let TxExecution = function (
 
 var Actions = {
   // 初始化：拿到web3提供的地址， 利用json文件生成合约··
-  start: function () {
+  start: function() {
     HashDataConContract = new web3.eth.Contract(contractABI, contractAT, {});
     HashDataConContract.setProvider(web3Utils.currentProvider);
   },
 
   // 往链上存数据
-  insertHash: function (data) {
+  insertHash: function(data) {
     let dataObject = data;
     let requestObject = dataObject.data;
 
@@ -654,7 +654,7 @@ var Actions = {
   },
 
   // 去链上查询结果
-  selectHash: function (data) {
+  selectHash: function(data) {
     let dataObject = data;
 
     HashDataConContract.methods
@@ -683,8 +683,8 @@ var Actions = {
 let qs;
 app.use((req, res, next) => {
   // 初始化socket连接
-  initWeb3Provider();
-  req.on("data", function (chunk) {
+  web3Utils.initWeb3Provider();
+  req.on("data", function(chunk) {
     try {
       // 将前台传来的值，转回对象类型
       qs = querystring.parse(chunk);
@@ -733,7 +733,7 @@ app.use((req, res, next) => {
 // });
 
 let lastDid;
-app.post("/insertHash", function (req, res) {
+app.post("/insertHash", function(req, res) {
   if (qs.hash) {
     console.log("/doDeposit info: ", qs.hash);
     qs = JSON.parse(qs.hash);
@@ -759,7 +759,7 @@ app.post("/insertHash", function (req, res) {
   });
 });
 
-app.post("/selectHash", function (req, res) {
+app.post("/selectHash", function(req, res) {
   console.log("/selectHash", qs.hash);
   // 查询方法
   result = Actions.selectHash({
@@ -772,7 +772,7 @@ app.listen({
     host: serverConfig.serverHost,
     port: serverConfig.serverPort
   },
-  function () {
+  function() {
     // 初始化web3连接
     initWeb3Provider();
     // 初始化
