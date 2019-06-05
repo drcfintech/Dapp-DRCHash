@@ -5,8 +5,6 @@ const responceData = require("./responceData.js");
 // log.saveLog();
 const app = require("express")();
 const serverConfig = require("./config/serverConfig.json");
-const path = require("path");
-const http = require("http");
 
 // 模块：对http请求所带的数据进行解析  https://www.cnblogs.com/whiteMu/p/5986297.html
 const querystring = require("querystring");
