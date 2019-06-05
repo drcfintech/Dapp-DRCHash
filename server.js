@@ -8,31 +8,60 @@ const serverConfig = require("./config/serverConfig.json");
 const path = require("path");
 const http = require("http");
 
-// independent module to deal with web3 stuffs
-const web3Utils = require("./web3utils.js");
-
 // 模块：对http请求所带的数据进行解析  https://www.cnblogs.com/whiteMu/p/5986297.html
 const querystring = require("querystring");
 const contract = require("truffle-contract");
 // 解决Error：Web3ProviderEngine does not support synchronous requests
 const Promise = require("bluebird");
 // 签名之前构造rawTransaction用
-var Tx = require("ethereumjs-tx");
+let Tx = require("ethereumjs-tx");
+// independent module to deal with web3 stuffs
+const web3Utils = require("./web3utils.js");
+let web3;
+// console.log(web3);
+// console.log(web3.eth);
 
 // 用户操作
 const operation = ["insertHash", "selectHash"];
 
-const abiPath = "./contractAbi/";
+const abiPath = "./contractsAbi/";
 const abiPath_external = "./external/";
 // 智能合约
-const HashDataCon_artifacts = require(abiPath + "HashDataCon.json");
+const HashData_artifacts = require(abiPath + "DRCHashDataCon.json");
 // 合约发布地址
-const contractAT = HashDataCon_artifacts.networks["4"].address;
+const HashData_contractAT = HashData_artifacts.networks["4"].address;
 
 // 合约abi
-const contractABI = HashDataCon_artifacts.abi;
+const HashData_contractABI = HashData_artifacts.abi;
 // 初始化合约实例
-let HashDataConContract;
+let HashDataContract;
+// 智能合约
+const FileHash_artifacts = require(abiPath + "DRCFileHashCon.json");
+// 合约发布地址
+const FileHash_contractAT = FileHash_artifacts.networks["4"].address;
+
+// 合约abi
+const FileHash_contractABI = FileHash_artifacts.abi;
+// 初始化合约实例
+let FileHashContract;
+// 智能合约
+const MediaHash_artifacts = require(abiPath + "DRCMediaHashCon.json");
+// 合约发布地址
+const MediaHash_contractAT = MediaHash_artifacts.networks["4"].address;
+
+// 合约abi
+const MediaHash_contractABI = MediaHash_artifacts.abi;
+// 初始化合约实例
+let MediaHashContract;
+// 智能合约
+const DDHash_artifacts = require(abiPath + "DRCDDHashCon.json");
+// 合约发布地址
+const DDHash_contractAT = DDHash_artifacts.networks["4"].address;
+
+// 合约abi
+const DDHash_contractABI = DDHash_artifacts.abi;
+// 初始化合约实例
+let DDHashContract;
 
 const GAS_LIMIT = 6721975; // default gas limit
 const SAFE_GAS_PRICE = 41; // default gas price (unit is gwei)
@@ -45,9 +74,8 @@ const gasPricePromote = {
   DEFAULT: 1.1
 };
 const transactionType = {
-  WITHDRAW: "withdraw",
-  CREATE_DEPOSIT: "createDeposit",
-  DO_DEPOSIT: "doDeposit",
+  INSERTHASH: "insertHash",
+  DELETEHASH: "deleteHash",
   NORMAL: "normal"
 };
 const intervals = {
@@ -509,11 +537,105 @@ let TxExecution = function(
   getBalance(callback, dataObject);
 };
 
+let hashContract = (contractType) => {
+  switch (contractType) {
+    case 1:
+    case 2:
+      return {
+        contract: FileHashContract, contractAT: FileHash_contractAT
+      };
+    case 3:
+    case 4:
+      return {
+        contract: DDHashContract, contractAT: DDHash_contractAT
+      };
+    case 5:
+    case 6:
+    case 7:
+      return {
+        contract: MediaHashContract, contractAT: MediaHash_contractAT
+      };
+    default:
+      return {
+        contract: HashDataContract, contractAT: HashData_contractAT
+      };
+  }
+};
+
+let getMediaType = (dataType) => {
+  let mediaType;
+  switch (dataType) {
+    case 5:
+      mediaType = 0;
+      break;
+    case 6:
+      mediaType = 2;
+      break;
+    case 7:
+      mediaType = 1;
+      break;
+    default:
+      mediaType = 3;
+      throw ('Wrong media type!');
+  }
+  return mediaType;
+}
+
+let getUploadData = (data) => {
+  let mediaType;
+  console.log("-- -- -- -- -- - upload raw data-- -- -- -- -- -");
+  switch (data.type) {
+    case 1:
+    case 2:
+      console.log("operator: \n", data.operator);
+      console.log("fileName: \n", data.filename);
+      console.log("fileUrl: \n", data.URL);
+      console.log("author: \n", data.author);
+      return web3.eth.abi.encodeParameters(
+        ["string", "string", "string", "string"],
+        [data.operator, data.filename, data.URL, data.author]
+      );
+    case 3:
+    case 4:
+      console.log("operator: \n", data.operator);
+      console.log("taskName: \n", data.ddname);
+      console.log("dders: \n", data.dders);
+      console.log("subhash: \n", data.subhash);
+      let ddersNum = (data.dders.length < data.subhash.length ? data.dders.length : data.subhash.length);
+      let dders = data.dders && ddersNum > 0 ? data.dders.join(",") : "";
+      let ddersHash = data.subhash && ddersNum > 0 ? data.subhash.join(",") : "";
+      return web3.eth.abi.encodeParameters(
+        ["string", "string", "string", "string", "uint256"],
+        [data.operator, data.ddname, ddersNum, dders, ddersHash]
+      );
+    case 5:
+    case 6:
+    case 7:
+      console.log("operator: \n", data.operator);
+      console.log("fileName: \n", data.mname);
+      console.log("fileUrl: \n", data.URL);
+      console.log("author: \n", data.author);
+      console.log("mediaType: \n", data.type);
+      return web3.eth.abi.encodeParameters(
+        ["string", "string", "string", "string", "uint256"],
+        [data.operator, data.mname, data.URL, data.author, getMediaType(data.type)]
+      );
+    default:
+      return web3.eth.abi.encodeParameter("string", data.operator);
+  }
+}
+
 var Actions = {
   // 初始化：拿到web3提供的地址， 利用json文件生成合约··
   start: function() {
-    HashDataConContract = new web3.eth.Contract(contractABI, contractAT, {});
-    HashDataConContract.setProvider(web3Utils.currentProvider);
+    HashDataContract = new web3.eth.Contract(HashData_contractABI, HashData_contractAT, {});
+    FileHashContract = new web3.eth.Contract(FileHash_contractABI, FileHash_contractAT, {});
+    MediaHashContract = new web3.eth.Contract(MediaHash_contractABI, MediaHash_contractAT, {});
+    DDHashContract = new web3.eth.Contract(DDHash_contractABI, DDHash_contractAT, {});
+    HashDataContract.setProvider(web3Utils.currentProvider());
+    FileHashContract.setProvider(web3Utils.currentProvider());
+    MediaHashContract.setProvider(web3Utils.currentProvider());
+    DDHashContract.setProvider(web3Utils.currentProvider());
   },
 
   // 往链上存数据
@@ -530,7 +652,7 @@ var Actions = {
       dataObject.res.end(JSON.stringify(responceData.addressError));
       // 保存log
       log.saveLog(
-        operation[1],
+        operation[0],
         new Date().toLocaleString(),
         requestObject,
         0,
@@ -541,7 +663,7 @@ var Actions = {
     }
 
     // 上链步骤：查询没有结果之后再上链
-    HashDataConContract.methods
+    hashContract(requestObject.type).contract.methods
       .selectHash(requestObject.roothash)
       .call((error, result) => {
         if (error) {
@@ -560,6 +682,7 @@ var Actions = {
         }
 
         console.log(" 数据上链前的查询结果   \n", result);
+        console.log(" 成功与否：\n", result["0"]);
         // 返回值显示已经有该hash的记录
         if (result && result["0"] == true) {
           dataObject.res.end(JSON.stringify(responceData.hashAlreadyInserted));
@@ -580,13 +703,15 @@ var Actions = {
           // 拿到rawTx里面的data部分
           console.log(requestObject);
           console.log("upload hash is ", requestObject.roothash);
+          let toUpload = getUploadData(requestObject);
+          console.log("to be uploaded: \n", toUpload);
           let encodeData_param = web3.eth.abi.encodeParameters(
-            ["string"],
-            [requestObject.roothash]
+            ["string", "bytes"],
+            [requestObject.roothash, toUpload]
           );
           console.log(encodeData_params);
           let encodeData_function = web3.eth.abi.encodeFunctionSignature(
-            "insertHash(string)"
+            "insertHash(string,bytes)"
           );
           console.log(encodeData_function);
           let encodeData = encodeData_function + encodeData_param.slice(2);
@@ -598,13 +723,13 @@ var Actions = {
             console.log("insertHash tx: ", result);
             if (!result) {
               // console.log(dataObject);
-              dataObject.res.end(JSON.stringify(responceData.doDepositFailed));
+              dataObject.res.end(JSON.stringify(responceData.insertHashFailed));
               // log.saveLog(operation[2], new Date().toLocaleString(), qs.withdrawAddress, gasPrice, result.gasUsed, responceData.withdrawFailed);
 
               return;
             }
 
-            returnObject = responceData.doDepositTxSuccess;
+            returnObject = responceData.insertHashSuccess;
             if (!result.transactionHash) {
               returnObject.txHash = result;
             } else {
@@ -616,7 +741,7 @@ var Actions = {
               console.log(logObject);
             }
 
-            console.log("doDepoist return object is: ", returnObject);
+            console.log("insertHash return object is: ", returnObject);
 
             // 返回success 附带message
             // console.log(dataObject);
@@ -630,11 +755,11 @@ var Actions = {
           // console.log("data Object outside is ", dataObject);
 
           TxExecution(
-            contractAT,
+            hashContract(requestObject.type).contractAT,
             encodeData,
             processResult,
             dataObject,
-            transactionType.NORMAL
+            transactionType.INSERTHASH
           );
         }
       })
@@ -676,7 +801,309 @@ var Actions = {
         // 保存log
         // log.saveLog(operation[1], new Date().toLocaleString(), qs.hash, responceData.selectHashSuccess);
       });
-  }
+  },
+
+  getTxsBlocks: function(data) {
+    let dataObject = data;
+
+    try {
+      // let queryData = dataObject.data.split(",");
+      let queryData = JSON.parse(dataObject.data);
+      console.log(queryData);
+      console.log(queryData.length);
+      console.log(queryData[0]);
+      if (queryData.length == 0) {
+        // 返回failed 附带message
+        dataObject.res.end(JSON.stringify(responceData.dataError));
+        // 保存log
+        // log.saveLog(operation[0], new Date().toLocaleString(), qs.hash, 0, 0, responceData.dataError);
+        return;
+      }
+
+      let returnObject = responceData.getTxsBlocksSuccess;
+      returnObject.records = new Array(queryData.length);
+
+      for (var i = 0; i < queryData.length; i++) {
+        returnObject.records[i] = {
+          txHash: queryData[i].txHash
+        };
+      }
+      console.log("get Tx blocks return object currently is: ", returnObject);
+
+      const getBlockNum = (txHash) => {
+        return new Promise((resolve, reject) => {
+            let iCount = 0;
+            const handle = setInterval(() => {
+              iCount += 1;
+              web3.eth.getTransaction(txHash, (error, result) => {
+                console.log('get block tx hash is: ', txHash);
+                if (error) {
+                  clearInterval(handle);
+                  reject(error);
+                }
+
+                if (result) {
+                  clearInterval(handle);
+                  console.log('block number: ', result.blockNumber);
+                  return resolve(result.blockNumber);
+                }
+
+                if (iCount > 2) {
+                  clearInterval(handle);
+                  console.log('cannot get block number this time...');
+                  return resolve(null);
+                }
+              });
+            }, 5000);
+          })
+          .catch(err => {
+            console.log("catch error when getBlockNum: ", err);
+            return 'error'; // set the block number as 'error'
+          })
+      }
+
+      const getTxsBlockNumbers = async (returnOneObject, queryObj) => {
+        returnOneObject.blockNumber = await getBlockNum(queryObj.txHash);
+        let replHash = txReplaceRecs.get(queryObj.txHash);
+        if (replHash) {
+          returnOneObject.replacedTxHash = replHash;
+        } else {
+          returnOneObject.replacedTxHash = null;
+        }
+        console.log('get block nubmer is: ', returnOneObject.blockNumber);
+        console.log('replaced Tx hash is: ', returnOneObject.replacedTxHash);
+      }
+
+      var promises = returnObject.records.map((record, ind) => {
+        return getTxsBlockNumbers(record, queryData[ind]);
+      });
+
+      Promise.all(promises)
+        .then(values => {
+          // 返回success 附带message
+          console.log("get Tx blocks return Object finally is: ", returnObject);
+          dataObject.res.end(JSON.stringify(returnObject));
+          // 重置
+          returnObject = {};
+          // 保存log
+          // log.saveLog(operation[1], new Date().toLocaleString(), qs.hash, responceData.selectHashSuccess);
+        })
+        .catch(e => {
+          if (e) {
+            console.log('evm error', e);
+            dataObject.res.end(JSON.stringify(responceData.evmError));
+            // 重置
+            returnObject = {};
+            // 保存log
+            // log.saveLog(operation[1], new Date().toLocaleString(), qs.hash, 0, 0, responceData.evmError);
+            return;
+          }
+        });
+    } catch (e) {
+      if (e) {
+        console.log('program error', e);
+        dataObject.res.end(JSON.stringify(responceData.programError));
+        // 重置
+        // returnObject = {};
+        // 保存log
+        // log.saveLog(operation[1], new Date().toLocaleString(), qs.hash, 0, 0, responceData.evmError);
+        return;
+      }
+    }
+
+    return;
+  },
+
+  getTxsDetail: function(data) {
+    let dataObject = data;
+
+    let queryData;
+    try {
+      // let queryData = dataObject.data.split(",");
+      queryData = JSON.parse(dataObject.data);
+      console.log(queryData);
+      console.log(queryData.length);
+      console.log(queryData[0]);
+      if (queryData.length == 0) {
+        // 返回failed 附带message
+        dataObject.res.end(JSON.stringify(responceData.dataError));
+        // 保存log
+        // log.saveLog(operation[0], new Date().toLocaleString(), qs.hash, 0, 0, responceData.dataError);
+        return;
+      }
+    } catch (e) {
+      if (e) {
+        console.log('program error', e);
+        dataObject.res.end(JSON.stringify(responceData.programError));
+        // 重置
+        // returnObject = {};
+        // 保存log
+        // log.saveLog(operation[1], new Date().toLocaleString(), qs.hash, 0, 0, responceData.evmError);
+        return;
+      }
+    }
+
+    const totalConfirmNumber = 24;
+    web3.eth.getBlockNumber()
+      .then((result) => {
+        let currentBlock = result;
+        console.log(currentBlock);
+        return currentBlock;
+      })
+      .then((currentBlock) => {
+        let blockHigh = currentBlock;
+        let returnObject = responceData.getTxsDetailSuccess;
+        returnObject.records = new Array(queryData.length);
+
+        for (var i = 0; i < queryData.length; i++) {
+          returnObject.records[i] = {
+            txHash: queryData[i].txHash
+          };
+          returnObject.records[i].blockNumber = queryData[i].blockNumber;
+          console.log(totalConfirmNumber);
+          console.log(blockHigh);
+          console.log(queryData[i].blockNubmber);
+          console.log(returnObject.records[i].blockNumber);
+          if (returnObject.records[i].blockNumber != null) {
+            console.log(blockHigh - queryData[i].blockNubmber);
+            console.log(totalConfirmNumber - (blockHigh - returnObject.records[i].blockNumber));
+            if ((blockHigh - returnObject.records[i].blockNumber) > totalConfirmNumber) {
+              returnObject.records[i].blockConfirmNum = totalConfirmNumber;
+            } else {
+              returnObject.records[i].blockConfirmNum = blockHigh - returnObject.records[i].blockNumber;
+            }
+          } else {
+            returnObject.records[i].blockConfirmNum = 0;
+            console.log(returnObject.records[i].blockConfirmNum);
+          }
+        }
+        console.log("get Tx details return object currently is: ", returnObject);
+
+        const getGasPrice = (txHash) => {
+          return new Promise((resolve, reject) => {
+              const handle = setInterval(() => {
+                web3.eth.getTransaction(txHash, (error, result) => {
+                  if (error) {
+                    clearInterval(handle);
+                    reject(error);
+                  }
+
+                  if (result) {
+                    clearInterval(handle);
+                    console.log('gasPrice  ', result.gasPrice);
+                    return resolve(result.gasPrice);
+                  }
+                });
+              }, 5000);
+            })
+            .catch(err => {
+              console.log("catch error when getGasPrice");
+              return new Promise.reject(err);
+            });
+        }
+
+        const getGasUsed = (txHash) => {
+          return new Promise((resolve, reject) => {
+              const handle = setInterval(() => {
+                web3.eth.getTransactionReceipt(txHash, (error, result) => {
+                  if (error) {
+                    clearInterval(handle);
+                    reject(error);
+                  }
+
+                  // returnOneObject.gasUsed = result.gasUsed;
+                  if (result) {
+                    clearInterval(handle);
+                    console.log('tx status: ', result.status);
+                    console.log('gasUsed  ', result.gasUsed);
+                    if (result.status) {
+                      return resolve(['success', result.gasUsed]);
+                    } else {
+                      return resolve(['failed', result.gasUsed]);
+                    }
+                  }
+                });
+              }, 5000);
+            })
+            .catch(err => {
+              console.log("catch error when getGasUsed");
+              return new Promise.reject(err);
+            });
+        }
+
+        const getTxTimestamp = (block) => {
+          return new Promise((resolve, reject) => {
+              const handle = setInterval(() => {
+                web3.eth.getBlock(block, (err, res) => {
+                  if (err) {
+                    clearInterval(handle);
+                    reject(err);
+                  }
+
+                  if (res) {
+                    clearInterval(handle);
+                    console.log('timestamp  ', res.timestamp);
+                    return resolve(res.timestamp);
+                  }
+                });
+              }, 5000);
+            })
+            .catch(err => {
+              console.log("catch error when getTxTimestamp");
+              return new Promise.reject(err);
+            });
+        }
+
+        const getGasPriceUsed = async (returnOneObject, queryObj) => {
+          returnOneObject.gasPrice = await getGasPrice(queryObj.txHash);
+          [returnOneObject.txstatus, returnOneObject.gasUsed] = await getGasUsed(queryObj.txHash);
+          returnOneObject.timestamp = await getTxTimestamp(queryObj.blockNumber);
+          console.log(returnOneObject.gasPrice);
+          console.log(returnOneObject.txstatus);
+          console.log(returnOneObject.gasUsed);
+          console.log(returnOneObject.timestamp);
+        }
+
+        var promises = returnObject.records.map((record, ind) => {
+          return getGasPriceUsed(record, queryData[ind]);
+        });
+
+        Promise.all(promises)
+          .then(values => {
+            // 返回success 附带message
+            console.log("get Tx details return Object finally is: ", returnObject);
+            dataObject.res.end(JSON.stringify(returnObject));
+            // 重置
+            returnObject = {};
+            // 保存log
+            // log.saveLog(operation[1], new Date().toLocaleString(), qs.hash, responceData.selectHashSuccess);
+          })
+          .catch(e => {
+            if (e) {
+              console.log('evm error', e);
+              dataObject.res.end(JSON.stringify(responceData.evmError));
+              // 重置
+              returnObject = {};
+              // 保存log
+              // log.saveLog(operation[1], new Date().toLocaleString(), qs.hash, 0, 0, responceData.evmError);
+              return;
+            }
+          });
+      })
+      .catch(e => {
+        if (e) {
+          console.log('program error', e);
+          dataObject.res.end(JSON.stringify(responceData.programError));
+          // 重置
+          // returnObject = {};
+          // 保存log
+          // log.saveLog(operation[1], new Date().toLocaleString(), qs.hash, 0, 0, responceData.evmError);
+          return;
+        }
+      });
+
+    return;
+  },
 };
 
 // post数据处理模块
@@ -732,18 +1159,38 @@ app.use((req, res, next) => {
 //   });
 // });
 
+app.post("/getTxsBlocks", function(req, res) {
+  console.log('/getTxsBlocks: ', qs.hash);
+  // 查询方法
+  result = Actions.getTxsBlocks({
+    data: qs.hash,
+    res: res
+  });
+});
+
+app.post("/getTxsDetail", function(req, res) {
+  console.log('/getTxsDetail: ', qs.hash);
+  // 查询方法
+  result = Actions.getTxsDetail({
+    data: qs.hash,
+    res: res
+  });
+});
+
 let lastDid;
 app.post("/insertHash", function(req, res) {
   if (qs.hash) {
-    console.log("/doDeposit info: ", qs.hash);
+    console.log("/Hash insert info: ", qs.hash);
     qs = JSON.parse(qs.hash);
   }
+  console.log("/upload id: ", qs.did);
   console.log("/roothash ", qs.roothash);
   console.log("/type ", qs.type);
   console.log("/timestamp ", qs.timestamp);
-  console.log("/upload id: ", qs.did);
   console.log("/operator ", qs.operator);
   console.log("/filename ", qs.filename);
+  console.log("/mname ", qs.mname);
+  console.log("/URL ", qs.URL)
   console.log("/author ", qs.author);
   console.log("/subhash ", qs.subhash);
   console.log("dders ", qs.dders);
@@ -769,12 +1216,13 @@ app.post("/selectHash", function(req, res) {
 });
 
 app.listen({
-    host: serverConfig.serverHost,
+    // host: serverConfig.serverHost,
     port: serverConfig.serverPort
   },
   function() {
     // 初始化web3连接
-    initWeb3Provider();
+    web3Utils.initWeb3Provider();
+    web3 = web3Utils.getWeb3();
     // 初始化
     Actions.start();
     // 定时发邮件

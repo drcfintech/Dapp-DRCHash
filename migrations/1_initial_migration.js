@@ -4,9 +4,8 @@ var Migrations = artifacts.require("./Migrations.sol");
 //   deployer.deploy(Migrations);
 // };
 
-const deployIndex = 0;
 const contractConfig = require('../config/compileContract.json');
-const defaultGasLimit = 6721975;
+// const defaultGasLimit = 6721975;
 
 
 // console.log(contractConfig.contracts);
@@ -19,11 +18,10 @@ module.exports = function(deployer) {
   // deployContract(DRCWalletStorage, deployer);
   // deployer.then(() => {
   // contractConfig.contracts.map((contract, ind) => {
-  let contract = contractConfig.contracts[deployIndex];
   // if (ind > 0) {
-  console.log(contract.name);
+  console.log(contractConfig.contracts[0].name);
   deployer.deploy(Migrations, {
-    gas: contract.requiredGasLimit, //'6700000',
+    gas: contractConfig.contracts[0].requiredGasLimit, //'6700000',
     gasPrice: contractConfig.gasPrice
   });
   // }

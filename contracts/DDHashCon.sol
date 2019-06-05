@@ -20,11 +20,6 @@ contract DRCDDHashCon is DRCHashBase {
     string[] dderNames; // could be empty
   }
 
-  struct StrList {
-    uint len;
-    string[] strs;
-  }
-
   mapping(string => DDInfo) private ddHashInfo;
 
   event LogInsertDDHash(address indexed _operator, string _hash, string _ddTask, bool _bool);
@@ -97,29 +92,41 @@ contract DRCDDHashCon is DRCHashBase {
     bool selectRes;
     HashOperateLib.ExInfo memory exInfo;
 
+    DDInfo storage _ddInfo = ddHashInfo[_hash];
     (selectRes, exInfo.saver, exInfo.saverName, exInfo.saveTime) = hashInfoLib.selectHash(_hash);
     string memory selectTxHash = getTxIdByHash(_hash);
 
-    uint len = ddHashInfo[_hash].dderNames.length;
-    strings.slice[] memory ddersNameList = new strings.slice[](len);
-    strings.slice[] memory ddersHashList = new strings.slice[](len);
+    uint len = _ddInfo.dderNames.length;
+    bytes memory selectData;
+    if (len > 0) {
+      strings.slice[] memory ddersNameList = new strings.slice[](len);
+      strings.slice[] memory ddersHashList = new strings.slice[](len);
 
-    string memory tempDDerName;
-    for(uint i = 0; i < len; i = i.add(1)) {
-      tempDDerName = ddHashInfo[_hash].dderNames[i];
-      ddersNameList[i] = tempDDerName.toSlice();
-      ddersHashList[i] = ddHashInfo[_hash].ddersHashInfo[tempDDerName].toSlice();
+      string memory tempDDerName;
+      for (uint i = 0; i < len; i = i.add(1)) {
+        tempDDerName = _ddInfo.dderNames[i];
+        ddersNameList[i] = tempDDerName.toSlice();
+        ddersHashList[i] = _ddInfo.ddersHashInfo[tempDDerName].toSlice();
+      }
+      // string memory ddersNameStr = ",".toSlice().join(ddersNameList);
+      // string memory ddersHashStr = ",".toSlice().join(ddersHashList);
+
+      selectData = abi.encodePacked(
+        exInfo.saverName,
+        _ddInfo.ddTask,
+        len,
+        ",".toSlice().join(ddersNameList),
+        ",".toSlice().join(ddersHashList)
+      );
+    } else {
+      selectData = abi.encodePacked(
+        exInfo.saverName,
+        _ddInfo.ddTask,
+        len,
+        "",
+        ""
+      );
     }
-    // string memory ddersNameStr = ",".toSlice().join(ddersNameList);
-    // string memory ddersHashStr = ",".toSlice().join(ddersHashList);
-
-    bytes memory selectData = abi.encodePacked(
-      exInfo.saverName, 
-      ddHashInfo[_hash].ddTask, 
-      len,
-      ",".toSlice().join(ddersNameList),
-      ",".toSlice().join(ddersHashList)
-    );
 
     return (
       selectRes, 

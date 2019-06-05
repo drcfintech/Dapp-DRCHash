@@ -9,8 +9,7 @@ const infura_url = {
   rinkeby: "https://rinkeby.infura.io/v3/"
 };
 
-const infura_apikey = "0eeaa2ca76384986ae1cae796c895de8";
-// var infura_apikey = "9rWQxDtU4uAbAWdFFSAR";
+const infura_apikey = walletConfig.infura_apikey;
 
 module.exports = {
   solc: {

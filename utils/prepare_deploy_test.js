@@ -148,9 +148,10 @@ const processDeployFile = async function(index) {
     '_deploy_contracts.js';
   console.log(migrateFile);
   await fs.writeFile(migrateFile, migrateFileContent, (err) => {
-    console.log(err);
-    if (err)
+    if (err) {
+      console.log(err);
       throw err;
+    }
   });
 };
 
