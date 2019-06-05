@@ -638,6 +638,48 @@ var Actions = {
     DDHashContract.setProvider(web3Utils.currentProvider());
   },
 
+  // 去链上查询结果
+  getEthStatus: function(data) {
+    let dataObject = data;
+    console.log('data in getEthStatus is: ', dataObject.data);
+
+    if (typeof dataObject.data != 'string' || dataObject.data != 'getEthStatus') {
+      // 返回failed 附带message
+      dataObject.res.end(JSON.stringify(responceData.dataError));
+      // 保存log
+      // log.saveLog(operation[0], new Date().toLocaleString(), qs.hash, 0, 0, responceData.addressError);
+      return;
+    }
+
+    Promise.all([getGasPrice()])
+      .then(values => {
+        console.log('current gasPrice: ', values[0] + 'gwei');
+        // let gasPrice = web3.utils.toWei(values[0].toString(), "gwei");
+
+        // if current gas price is too high, then cancel the transaction
+        if (values[0] > SAFE_GAS_PRICE) {
+          dataObject.res.end(JSON.stringify(responceData.gasPriceTooHigh));
+          // 重置
+          // returnObject = {};
+          // 保存log
+          // log.saveLog(operation[1], new Date().toLocaleString(), qs.hash, gasPrice, 0, responceData.evmError);
+        } else {
+          console.log('EVM status is fine...');
+          dataObject.res.end(JSON.stringify(responceData.ethStatusSuccess));
+        }
+
+        return;
+      })
+      .catch(err => {
+        console.log('met error get ethereum status: ', err);
+        // 返回failed 附带message
+        dataObject.res.end(JSON.stringify(responceData.evmError));
+        // 保存log
+        // log.saveLog(operation[1], new Date().toLocaleString(), qs.hash, responceData.selectHashFailed);
+        return;
+      });
+  },
+
   // 往链上存数据
   insertHash: function(data) {
     let dataObject = data;
@@ -1158,6 +1200,15 @@ app.use((req, res, next) => {
 //     res: res
 //   });
 // });
+
+app.post("/getEthStatus", function(req, res) {
+  console.log('/getEthStatus: ', qs.hash);
+  // 查询方法
+  result = Actions.getEthStatus({
+    data: qs.hash,
+    res: res
+  });
+});
 
 app.post("/getTxsBlocks", function(req, res) {
   console.log('/getTxsBlocks: ', qs.hash);
