@@ -65,8 +65,8 @@ let getWeb3 = () => {
 };
 
 module.exports = {
-  initWeb3Provider: initWeb3Provider,
-  currentProvider: currentProvider,
-  realValue: realValue,
-  getWeb3: getWeb3
+  "initWeb3Provider": initWeb3Provider,
+  "currentProvider": currentProvider,
+  "realValue": realValue,
+  "getWeb3": getWeb3
 };

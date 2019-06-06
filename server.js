@@ -552,11 +552,11 @@ let hashContract = (contractType) => {
     case 6:
     case 7:
       return {
-        contract: MediaHashContract, contractAT: MediaHash_contractAT
+        "contract": MediaHashContract, "contractAT": MediaHash_contractAT
       };
     default:
       return {
-        contract: HashDataContract, contractAT: HashData_contractAT
+        "contract": HashDataContract, "contractAT": HashData_contractAT
       };
   }
 };
@@ -636,6 +636,7 @@ var Actions = {
     FileHashContract.setProvider(web3Utils.currentProvider());
     MediaHashContract.setProvider(web3Utils.currentProvider());
     DDHashContract.setProvider(web3Utils.currentProvider());
+    console.log(MediaHashContract);
   },
 
   // 去链上查询结果
