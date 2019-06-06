@@ -541,12 +541,12 @@ let hashContract = (contractType) => {
     case 1:
     case 2:
       return {
-        contract: FileHashContract, contractAT: FileHash_contractAT
+        "contract": FileHashContract, "contractAT": FileHash_contractAT
       };
     case 3:
     case 4:
       return {
-        contract: DDHashContract, contractAT: DDHash_contractAT
+        "contract": DDHashContract, "contractAT": DDHash_contractAT
       };
     case 5:
     case 6:
@@ -707,9 +707,11 @@ var Actions = {
     }
 
     console.log("the root hash is ", requestObject.roothash);
+    let insertHashCon = hashContract(requestObject.type).contract;
+    console.log(insertHashCon);
 
     // 上链步骤：查询没有结果之后再上链
-    hashContract(requestObject.type).contract.methods
+    insertHashCon.methods
       .selectHash(requestObject.roothash)
       .call((error, result) => {
         if (error) {
