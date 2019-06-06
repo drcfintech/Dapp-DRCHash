@@ -536,6 +536,7 @@ let TxExecution = function(
 };
 
 let hashContract = (contractType) => {
+  console.log("get hash contract instance...\n");
   switch (contractType) {
     case 1:
     case 2:
@@ -561,6 +562,7 @@ let hashContract = (contractType) => {
 };
 
 let getMediaType = (dataType) => {
+  console.log("get media type...");
   let mediaType;
   switch (dataType) {
     case 5:
@@ -585,20 +587,20 @@ let getUploadData = (data) => {
   switch (data.type) {
     case 1:
     case 2:
-      console.log("operator: \n", data.operator);
-      console.log("fileName: \n", data.filename);
-      console.log("fileUrl: \n", data.URL);
-      console.log("author: \n", data.author);
+      console.log("operator: ", data.operator);
+      console.log("fileName: ", data.filename);
+      console.log("fileUrl: ", data.URL);
+      console.log("author: ", data.author);
       return web3.eth.abi.encodeParameters(
         ["string", "string", "string", "string"],
         [data.operator, data.filename, data.URL, data.author]
       );
     case 3:
     case 4:
-      console.log("operator: \n", data.operator);
-      console.log("taskName: \n", data.ddname);
-      console.log("dders: \n", data.dders);
-      console.log("subhash: \n", data.subhash);
+      console.log("operator: ", data.operator);
+      console.log("taskName: ", data.ddname);
+      console.log("dders: ", data.dders);
+      console.log("subhash: ", data.subhash);
       let ddersNum = (data.dders.length < data.subhash.length ? data.dders.length : data.subhash.length);
       let dders = data.dders && ddersNum > 0 ? data.dders.join(",") : "";
       let ddersHash = data.subhash && ddersNum > 0 ? data.subhash.join(",") : "";
@@ -609,11 +611,11 @@ let getUploadData = (data) => {
     case 5:
     case 6:
     case 7:
-      console.log("operator: \n", data.operator);
-      console.log("fileName: \n", data.mname);
-      console.log("fileUrl: \n", data.URL);
-      console.log("author: \n", data.author);
-      console.log("mediaType: \n", data.type);
+      console.log("operator: ", data.operator);
+      console.log("fileName: ", data.mname);
+      console.log("fileUrl: ", data.URL);
+      console.log("author: ", data.author);
+      console.log("mediaType: ", data.type);
       return web3.eth.abi.encodeParameters(
         ["string", "string", "string", "string", "uint256"],
         [data.operator, data.mname, data.URL, data.author, getMediaType(data.type)]
@@ -683,6 +685,8 @@ var Actions = {
     let dataObject = data;
     let requestObject = dataObject.data;
 
+    console.log(requestObject);
+
     // first check hash value is valid
     if (
       !web3.utils.isHex(requestObject.roothash) &&
@@ -701,6 +705,8 @@ var Actions = {
       );
       return;
     }
+
+    console.log("the root hash is ", requestObject.roothash);
 
     // 上链步骤：查询没有结果之后再上链
     hashContract(requestObject.type).contract.methods
@@ -1242,7 +1248,7 @@ app.post("/insertHash", function(req, res) {
   console.log("/URL ", qs.URL)
   console.log("/author ", qs.author);
   console.log("/subhash ", qs.subhash);
-  console.log("dders ", qs.dders);
+  console.log("/dders ", qs.dders);
 
   if (lastDid && qs.did === lastDid) return;
   lastDid = qs.did;
