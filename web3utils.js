@@ -39,12 +39,12 @@ let initWeb3Provider = () => {
   console.log("web3.eth.defaultAccount : ", web3.eth.defaultAccount);
   //   console.log(web3.eth);
 
-  //   if (typeof web3.eth.getAccountsPromise === "undefined") {
-  //     //console.log('解决 Error: Web3ProviderEngine does not support synchronous requests.');
-  //     Promise.promisifyAll(web3.eth, {
-  //       suffix: "Promise"
-  //     });
-  //   }
+  if (typeof web3.eth.getAccountsPromise === "undefined") {
+    //console.log('解决 Error: Web3ProviderEngine does not support synchronous requests.');
+    Promise.promisifyAll(web3.eth, {
+      suffix: "Promise"
+    });
+  }
 };
 
 let currentProvider = () => {

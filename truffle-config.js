@@ -17,7 +17,7 @@ module.exports = {
       enabled: true,
       runs: 200
     },
-    version: "0.5.7"
+    version: "0.5.9"
   },
   networks: {
     development: {

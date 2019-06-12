@@ -20,11 +20,9 @@ contract DRCHashBase is Ownable {
 
   HashOperateLib.Info internal hashInfoLib;
   string public memo;
-  mapping(string => string) private txHashInfo; // hash => txHash
-  mapping(string => string) private insertedHashInfo; // txHash => hash
+  mapping(string => string) internal txHashInfo; // hash => txHash
+  mapping(string => string) internal insertedHashInfo; // txHash => hash
 
-  constructor() internal {
-  }
 
   /**
    * @dev set the memo to describe the objective of the contract

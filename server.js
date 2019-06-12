@@ -636,7 +636,8 @@ var Actions = {
     FileHashContract.setProvider(web3Utils.currentProvider());
     MediaHashContract.setProvider(web3Utils.currentProvider());
     DDHashContract.setProvider(web3Utils.currentProvider());
-    console.log(MediaHashContract);
+    // console.log(MediaHash_contractABI);
+    // console.log(MediaHashContract);
   },
 
   // 去链上查询结果
