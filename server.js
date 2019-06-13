@@ -618,7 +618,7 @@ let getUploadData = (data) => {
       console.log("mediaType: ", data.type);
       return web3.eth.abi.encodeParameters(
         ["string", "string", "string", "string", "uint256"],
-        [data.operator, data.mname, data.URL, data.author, getMediaType(data.type)]
+        [data.operator, data.mname, data.URL ? data.URL : "", data.author, getMediaType(data.type)]
       );
     default:
       return web3.eth.abi.encodeParameter("string", data.operator);
