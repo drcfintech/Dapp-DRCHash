@@ -755,7 +755,7 @@ var Actions = {
           console.log("upload hash is ", requestObject.roothash);
           let toUpload = getUploadData(requestObject);
           console.log("to be uploaded: \n", toUpload);
-          let encodeData_param = web3.eth.abi.encodeParameters(
+          let encodeData_params = web3.eth.abi.encodeParameters(
             ["string", "bytes"],
             [requestObject.roothash, toUpload]
           );
@@ -764,7 +764,7 @@ var Actions = {
             "insertHash(string,bytes)"
           );
           console.log(encodeData_function);
-          let encodeData = encodeData_function + encodeData_param.slice(2);
+          let encodeData = encodeData_function + encodeData_params.slice(2);
           console.log(encodeData);
 
           // 上链结果响应到请求方
