@@ -16,6 +16,7 @@ let Tx = require("ethereumjs-tx");
 // independent module to deal with web3 stuffs
 const web3Utils = require("./web3utils.js");
 let web3;
+let account;
 // console.log(web3);
 // console.log(web3.eth);
 
@@ -1282,6 +1283,7 @@ app.listen({
     // 初始化web3连接
     web3Utils.initWeb3Provider();
     web3 = web3Utils.getWeb3();
+    account = web3Utils.getAccount();
     // 初始化
     Actions.start();
     // 定时发邮件

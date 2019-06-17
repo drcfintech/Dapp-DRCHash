@@ -64,9 +64,14 @@ let getWeb3 = () => {
   return web3;
 };
 
+let getAccount = () => {
+  return account;
+};
+
 module.exports = {
   "initWeb3Provider": initWeb3Provider,
   "currentProvider": currentProvider,
   "realValue": realValue,
-  "getWeb3": getWeb3
+  "getWeb3": getWeb3,
+  "getAccount": getAccount
 };
