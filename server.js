@@ -115,7 +115,6 @@ app.use((req, res, next) => {
   next();
 });
 
-
 // let gasPrice;
 let currentNonce = -1;
 
@@ -202,7 +201,7 @@ const getGasPrice = () => {
 };
 
 // 获取estimated gasLimit
-const getGasLimit = (callObject) => {
+const getGasLimit = callObject => {
   return new Promise((resolve, reject) => {
     const handle = setInterval(() => {
       web3.eth.estimateGas(callObject, (error, result) => {
@@ -536,33 +535,37 @@ let TxExecution = function(
   getBalance(callback, dataObject);
 };
 
-let hashContract = (contractType) => {
+let hashContract = contractType => {
   console.log("get hash contract instance...\n");
   switch (contractType) {
     case 1:
     case 2:
       return {
-        "contract": FileHashContract, "contractAT": FileHash_contractAT
+        contract: FileHashContract,
+        contractAT: FileHash_contractAT
       };
     case 3:
     case 4:
       return {
-        "contract": DDHashContract, "contractAT": DDHash_contractAT
+        contract: DDHashContract,
+        contractAT: DDHash_contractAT
       };
     case 5:
     case 6:
     case 7:
       return {
-        "contract": MediaHashContract, "contractAT": MediaHash_contractAT
+        contract: MediaHashContract,
+        contractAT: MediaHash_contractAT
       };
     default:
       return {
-        "contract": HashDataContract, "contractAT": HashData_contractAT
+        contract: HashDataContract,
+        contractAT: HashData_contractAT
       };
   }
 };
 
-let getMediaType = (dataType) => {
+let getMediaType = dataType => {
   console.log("get media type...");
   let mediaType;
   switch (dataType) {
@@ -577,12 +580,16 @@ let getMediaType = (dataType) => {
       break;
     default:
       mediaType = 3;
-      throw ('Wrong media type!');
+      throw "Wrong media type!";
   }
   return mediaType;
-}
+};
 
-let getUploadData = (data) => {
+let safeStr = str => {
+  return str && str !== "" ? str : "";
+};
+
+let getUploadData = data => {
   let mediaType;
   console.log("-- -- -- -- -- - upload raw data-- -- -- -- -- -");
   switch (data.type) {
@@ -594,7 +601,12 @@ let getUploadData = (data) => {
       console.log("author: ", data.author);
       return web3.eth.abi.encodeParameters(
         ["string", "string", "string", "string"],
-        [data.operator, data.filename, data.URL, data.author]
+        [
+          safeStr(data.operator),
+          safeStr(data.filename),
+          saftStr(data.URL),
+          safeStr(data.author)
+        ]
       );
     case 3:
     case 4:
@@ -602,12 +614,22 @@ let getUploadData = (data) => {
       console.log("taskName: ", data.ddname);
       console.log("dders: ", data.dders);
       console.log("subhash: ", data.subhash);
-      let ddersNum = (data.dders.length < data.subhash.length ? data.dders.length : data.subhash.length);
+      let ddersNum =
+        data.dders.length < data.subhash.length
+          ? data.dders.length
+          : data.subhash.length;
       let dders = data.dders && ddersNum > 0 ? data.dders.join(",") : "";
-      let ddersHash = data.subhash && ddersNum > 0 ? data.subhash.join(",") : "";
+      let ddersHash =
+        data.subhash && ddersNum > 0 ? data.subhash.join(",") : "";
       return web3.eth.abi.encodeParameters(
         ["string", "string", "string", "string", "uint256"],
-        [data.operator, data.ddname, ddersNum, dders, ddersHash]
+        [
+          safeStr(data.operator),
+          safeStr(data.ddname),
+          safeStr(ddersNum),
+          safeStr(dders),
+          safeStr(ddersHash)
+        ]
       );
     case 5:
     case 6:
@@ -619,20 +641,42 @@ let getUploadData = (data) => {
       console.log("mediaType: ", data.type);
       return web3.eth.abi.encodeParameters(
         ["string", "string", "string", "string", "uint256"],
-        [data.operator, data.mname, data.URL ? data.URL : "", data.author, getMediaType(data.type)]
+        [
+          safeStr(data.operator),
+          safeStr(data.mname),
+          safeStr(data.URL),
+          safeStr(data.author),
+          getMediaType(data.type)
+        ]
       );
     default:
       return web3.eth.abi.encodeParameter("string", data.operator);
   }
-}
+};
 
 var Actions = {
   // 初始化：拿到web3提供的地址， 利用json文件生成合约··
   start: function() {
-    HashDataContract = new web3.eth.Contract(HashData_contractABI, HashData_contractAT, {});
-    FileHashContract = new web3.eth.Contract(FileHash_contractABI, FileHash_contractAT, {});
-    MediaHashContract = new web3.eth.Contract(MediaHash_contractABI, MediaHash_contractAT, {});
-    DDHashContract = new web3.eth.Contract(DDHash_contractABI, DDHash_contractAT, {});
+    HashDataContract = new web3.eth.Contract(
+      HashData_contractABI,
+      HashData_contractAT,
+      {}
+    );
+    FileHashContract = new web3.eth.Contract(
+      FileHash_contractABI,
+      FileHash_contractAT,
+      {}
+    );
+    MediaHashContract = new web3.eth.Contract(
+      MediaHash_contractABI,
+      MediaHash_contractAT,
+      {}
+    );
+    DDHashContract = new web3.eth.Contract(
+      DDHash_contractABI,
+      DDHash_contractAT,
+      {}
+    );
     HashDataContract.setProvider(web3Utils.currentProvider());
     FileHashContract.setProvider(web3Utils.currentProvider());
     MediaHashContract.setProvider(web3Utils.currentProvider());
@@ -644,9 +688,12 @@ var Actions = {
   // 去链上查询结果
   getEthStatus: function(data) {
     let dataObject = data;
-    console.log('data in getEthStatus is: ', dataObject.data);
+    console.log("data in getEthStatus is: ", dataObject.data);
 
-    if (typeof dataObject.data != 'string' || dataObject.data != 'getEthStatus') {
+    if (
+      typeof dataObject.data != "string" ||
+      dataObject.data != "getEthStatus"
+    ) {
       // 返回failed 附带message
       dataObject.res.end(JSON.stringify(responceData.dataError));
       // 保存log
@@ -656,7 +703,7 @@ var Actions = {
 
     Promise.all([getGasPrice()])
       .then(values => {
-        console.log('current gasPrice: ', values[0] + 'gwei');
+        console.log("current gasPrice: ", values[0] + "gwei");
         // let gasPrice = web3.utils.toWei(values[0].toString(), "gwei");
 
         // if current gas price is too high, then cancel the transaction
@@ -667,14 +714,14 @@ var Actions = {
           // 保存log
           // log.saveLog(operation[1], new Date().toLocaleString(), qs.hash, gasPrice, 0, responceData.evmError);
         } else {
-          console.log('EVM status is fine...');
+          console.log("EVM status is fine...");
           dataObject.res.end(JSON.stringify(responceData.ethStatusSuccess));
         }
 
         return;
       })
       .catch(err => {
-        console.log('met error get ethereum status: ', err);
+        console.log("met error get ethereum status: ", err);
         // 返回failed 附带message
         dataObject.res.end(JSON.stringify(responceData.evmError));
         // 保存log
@@ -881,37 +928,36 @@ var Actions = {
       }
       console.log("get Tx blocks return object currently is: ", returnObject);
 
-      const getBlockNum = (txHash) => {
+      const getBlockNum = txHash => {
         return new Promise((resolve, reject) => {
-            let iCount = 0;
-            const handle = setInterval(() => {
-              iCount += 1;
-              web3.eth.getTransaction(txHash, (error, result) => {
-                console.log('get block tx hash is: ', txHash);
-                if (error) {
-                  clearInterval(handle);
-                  reject(error);
-                }
+          let iCount = 0;
+          const handle = setInterval(() => {
+            iCount += 1;
+            web3.eth.getTransaction(txHash, (error, result) => {
+              console.log("get block tx hash is: ", txHash);
+              if (error) {
+                clearInterval(handle);
+                reject(error);
+              }
 
-                if (result) {
-                  clearInterval(handle);
-                  console.log('block number: ', result.blockNumber);
-                  return resolve(result.blockNumber);
-                }
+              if (result) {
+                clearInterval(handle);
+                console.log("block number: ", result.blockNumber);
+                return resolve(result.blockNumber);
+              }
 
-                if (iCount > 2) {
-                  clearInterval(handle);
-                  console.log('cannot get block number this time...');
-                  return resolve(null);
-                }
-              });
-            }, 5000);
-          })
-          .catch(err => {
-            console.log("catch error when getBlockNum: ", err);
-            return 'error'; // set the block number as 'error'
-          })
-      }
+              if (iCount > 2) {
+                clearInterval(handle);
+                console.log("cannot get block number this time...");
+                return resolve(null);
+              }
+            });
+          }, 5000);
+        }).catch(err => {
+          console.log("catch error when getBlockNum: ", err);
+          return "error"; // set the block number as 'error'
+        });
+      };
 
       const getTxsBlockNumbers = async (returnOneObject, queryObj) => {
         returnOneObject.blockNumber = await getBlockNum(queryObj.txHash);
@@ -921,9 +967,9 @@ var Actions = {
         } else {
           returnOneObject.replacedTxHash = null;
         }
-        console.log('get block nubmer is: ', returnOneObject.blockNumber);
-        console.log('replaced Tx hash is: ', returnOneObject.replacedTxHash);
-      }
+        console.log("get block nubmer is: ", returnOneObject.blockNumber);
+        console.log("replaced Tx hash is: ", returnOneObject.replacedTxHash);
+      };
 
       var promises = returnObject.records.map((record, ind) => {
         return getTxsBlockNumbers(record, queryData[ind]);
@@ -941,7 +987,7 @@ var Actions = {
         })
         .catch(e => {
           if (e) {
-            console.log('evm error', e);
+            console.log("evm error", e);
             dataObject.res.end(JSON.stringify(responceData.evmError));
             // 重置
             returnObject = {};
@@ -952,7 +998,7 @@ var Actions = {
         });
     } catch (e) {
       if (e) {
-        console.log('program error', e);
+        console.log("program error", e);
         dataObject.res.end(JSON.stringify(responceData.programError));
         // 重置
         // returnObject = {};
@@ -984,7 +1030,7 @@ var Actions = {
       }
     } catch (e) {
       if (e) {
-        console.log('program error', e);
+        console.log("program error", e);
         dataObject.res.end(JSON.stringify(responceData.programError));
         // 重置
         // returnObject = {};
@@ -995,13 +1041,14 @@ var Actions = {
     }
 
     const totalConfirmNumber = 24;
-    web3.eth.getBlockNumber()
-      .then((result) => {
+    web3.eth
+      .getBlockNumber()
+      .then(result => {
         let currentBlock = result;
         console.log(currentBlock);
         return currentBlock;
       })
-      .then((currentBlock) => {
+      .then(currentBlock => {
         let blockHigh = currentBlock;
         let returnObject = responceData.getTxsDetailSuccess;
         returnObject.records = new Array(queryData.length);
@@ -1017,103 +1064,115 @@ var Actions = {
           console.log(returnObject.records[i].blockNumber);
           if (returnObject.records[i].blockNumber != null) {
             console.log(blockHigh - queryData[i].blockNubmber);
-            console.log(totalConfirmNumber - (blockHigh - returnObject.records[i].blockNumber));
-            if ((blockHigh - returnObject.records[i].blockNumber) > totalConfirmNumber) {
+            console.log(
+              totalConfirmNumber -
+                (blockHigh - returnObject.records[i].blockNumber)
+            );
+            if (
+              blockHigh - returnObject.records[i].blockNumber >
+              totalConfirmNumber
+            ) {
               returnObject.records[i].blockConfirmNum = totalConfirmNumber;
             } else {
-              returnObject.records[i].blockConfirmNum = blockHigh - returnObject.records[i].blockNumber;
+              returnObject.records[i].blockConfirmNum =
+                blockHigh - returnObject.records[i].blockNumber;
             }
           } else {
             returnObject.records[i].blockConfirmNum = 0;
             console.log(returnObject.records[i].blockConfirmNum);
           }
         }
-        console.log("get Tx details return object currently is: ", returnObject);
+        console.log(
+          "get Tx details return object currently is: ",
+          returnObject
+        );
 
-        const getGasPrice = (txHash) => {
+        const getGasPrice = txHash => {
           return new Promise((resolve, reject) => {
-              const handle = setInterval(() => {
-                web3.eth.getTransaction(txHash, (error, result) => {
-                  if (error) {
-                    clearInterval(handle);
-                    reject(error);
-                  }
+            const handle = setInterval(() => {
+              web3.eth.getTransaction(txHash, (error, result) => {
+                if (error) {
+                  clearInterval(handle);
+                  reject(error);
+                }
 
-                  if (result) {
-                    clearInterval(handle);
-                    console.log('gasPrice  ', result.gasPrice);
-                    return resolve(result.gasPrice);
-                  }
-                });
-              }, 5000);
-            })
-            .catch(err => {
-              console.log("catch error when getGasPrice");
-              return new Promise.reject(err);
-            });
-        }
+                if (result) {
+                  clearInterval(handle);
+                  console.log("gasPrice  ", result.gasPrice);
+                  return resolve(result.gasPrice);
+                }
+              });
+            }, 5000);
+          }).catch(err => {
+            console.log("catch error when getGasPrice");
+            return new Promise.reject(err);
+          });
+        };
 
-        const getGasUsed = (txHash) => {
+        const getGasUsed = txHash => {
           return new Promise((resolve, reject) => {
-              const handle = setInterval(() => {
-                web3.eth.getTransactionReceipt(txHash, (error, result) => {
-                  if (error) {
-                    clearInterval(handle);
-                    reject(error);
-                  }
+            const handle = setInterval(() => {
+              web3.eth.getTransactionReceipt(txHash, (error, result) => {
+                if (error) {
+                  clearInterval(handle);
+                  reject(error);
+                }
 
-                  // returnOneObject.gasUsed = result.gasUsed;
-                  if (result) {
-                    clearInterval(handle);
-                    console.log('tx status: ', result.status);
-                    console.log('gasUsed  ', result.gasUsed);
-                    if (result.status) {
-                      return resolve(['success', result.gasUsed]);
-                    } else {
-                      return resolve(['failed', result.gasUsed]);
-                    }
+                // returnOneObject.gasUsed = result.gasUsed;
+                if (result) {
+                  clearInterval(handle);
+                  console.log("tx status: ", result.status);
+                  console.log("gasUsed  ", result.gasUsed);
+                  if (result.status) {
+                    return resolve(["success", result.gasUsed]);
+                  } else {
+                    return resolve(["failed", result.gasUsed]);
                   }
-                });
-              }, 5000);
-            })
-            .catch(err => {
-              console.log("catch error when getGasUsed");
-              return new Promise.reject(err);
-            });
-        }
+                }
+              });
+            }, 5000);
+          }).catch(err => {
+            console.log("catch error when getGasUsed");
+            return new Promise.reject(err);
+          });
+        };
 
-        const getTxTimestamp = (block) => {
+        const getTxTimestamp = block => {
           return new Promise((resolve, reject) => {
-              const handle = setInterval(() => {
-                web3.eth.getBlock(block, (err, res) => {
-                  if (err) {
-                    clearInterval(handle);
-                    reject(err);
-                  }
+            const handle = setInterval(() => {
+              web3.eth.getBlock(block, (err, res) => {
+                if (err) {
+                  clearInterval(handle);
+                  reject(err);
+                }
 
-                  if (res) {
-                    clearInterval(handle);
-                    console.log('timestamp  ', res.timestamp);
-                    return resolve(res.timestamp);
-                  }
-                });
-              }, 5000);
-            })
-            .catch(err => {
-              console.log("catch error when getTxTimestamp");
-              return new Promise.reject(err);
-            });
-        }
+                if (res) {
+                  clearInterval(handle);
+                  console.log("timestamp  ", res.timestamp);
+                  return resolve(res.timestamp);
+                }
+              });
+            }, 5000);
+          }).catch(err => {
+            console.log("catch error when getTxTimestamp");
+            return new Promise.reject(err);
+          });
+        };
 
         const getGasPriceUsed = async (returnOneObject, queryObj) => {
           returnOneObject.gasPrice = await getGasPrice(queryObj.txHash);
-          [returnOneObject.txstatus, returnOneObject.gasUsed] = await getGasUsed(queryObj.txHash);
-          returnOneObject.timestamp = await getTxTimestamp(queryObj.blockNumber);
+          [
+            returnOneObject.txstatus,
+            returnOneObject.gasUsed
+          ] = await getGasUsed(queryObj.txHash);
+          returnOneObject.timestamp = await getTxTimestamp(
+            queryObj.blockNumber
+          );
           console.log(returnOneObject.gasPrice);
           console.log(returnOneObject.txstatus);
           console.log(returnOneObject.gasUsed);
           console.log(returnOneObject.timestamp);
-        }
+        };
 
         var promises = returnObject.records.map((record, ind) => {
           return getGasPriceUsed(record, queryData[ind]);
@@ -1122,7 +1181,10 @@ var Actions = {
         Promise.all(promises)
           .then(values => {
             // 返回success 附带message
-            console.log("get Tx details return Object finally is: ", returnObject);
+            console.log(
+              "get Tx details return Object finally is: ",
+              returnObject
+            );
             dataObject.res.end(JSON.stringify(returnObject));
             // 重置
             returnObject = {};
@@ -1131,7 +1193,7 @@ var Actions = {
           })
           .catch(e => {
             if (e) {
-              console.log('evm error', e);
+              console.log("evm error", e);
               dataObject.res.end(JSON.stringify(responceData.evmError));
               // 重置
               returnObject = {};
@@ -1143,7 +1205,7 @@ var Actions = {
       })
       .catch(e => {
         if (e) {
-          console.log('program error', e);
+          console.log("program error", e);
           dataObject.res.end(JSON.stringify(responceData.programError));
           // 重置
           // returnObject = {};
@@ -1154,7 +1216,7 @@ var Actions = {
       });
 
     return;
-  },
+  }
 };
 
 // post数据处理模块
@@ -1211,7 +1273,7 @@ app.use((req, res, next) => {
 // });
 
 app.post("/getEthStatus", function(req, res) {
-  console.log('/getEthStatus: ', qs.hash);
+  console.log("/getEthStatus: ", qs.hash);
   // 查询方法
   result = Actions.getEthStatus({
     data: qs.hash,
@@ -1220,7 +1282,7 @@ app.post("/getEthStatus", function(req, res) {
 });
 
 app.post("/getTxsBlocks", function(req, res) {
-  console.log('/getTxsBlocks: ', qs.hash);
+  console.log("/getTxsBlocks: ", qs.hash);
   // 查询方法
   result = Actions.getTxsBlocks({
     data: qs.hash,
@@ -1229,7 +1291,7 @@ app.post("/getTxsBlocks", function(req, res) {
 });
 
 app.post("/getTxsDetail", function(req, res) {
-  console.log('/getTxsDetail: ', qs.hash);
+  console.log("/getTxsDetail: ", qs.hash);
   // 查询方法
   result = Actions.getTxsDetail({
     data: qs.hash,
@@ -1250,7 +1312,7 @@ app.post("/insertHash", function(req, res) {
   console.log("/operator ", qs.operator);
   console.log("/filename ", qs.filename);
   console.log("/mname ", qs.mname);
-  console.log("/URL ", qs.URL)
+  console.log("/URL ", qs.URL);
   console.log("/author ", qs.author);
   console.log("/subhash ", qs.subhash);
   console.log("/dders ", qs.dders);
@@ -1275,7 +1337,8 @@ app.post("/selectHash", function(req, res) {
   });
 });
 
-app.listen({
+app.listen(
+  {
     // host: serverConfig.serverHost,
     port: serverConfig.serverPort
   },
