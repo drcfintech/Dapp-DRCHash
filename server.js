@@ -711,7 +711,7 @@ var Actions = {
 
     console.log("the root hash is ", requestObject.roothash);
     let insertHashCon = hashContract(requestObject.type).contract;
-    console.log(insertHashCon);
+    // console.log(insertHashCon);
 
     // 上链步骤：查询没有结果之后再上链
     insertHashCon.methods
