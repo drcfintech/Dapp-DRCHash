@@ -604,7 +604,7 @@ let getUploadData = data => {
         [
           safeStr(data.operator),
           safeStr(data.filename),
-          saftStr(data.URL),
+          safeStr(data.URL),
           safeStr(data.author)
         ]
       );
