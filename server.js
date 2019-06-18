@@ -614,10 +614,16 @@ let getUploadData = data => {
       console.log("taskName: ", data.ddname);
       console.log("dders: ", data.dders);
       console.log("subhash: ", data.subhash);
-      let ddersNum =
-        data.dders.length < data.subhash.length
-          ? data.dders.length
-          : data.subhash.length;
+      let ddersNum = (() => {
+        if (data.dders && data.subhash) {
+          return data.dders.length < data.subhash.length
+            ? data.dders.length
+            : data.subhash.length;
+        } else {
+          return 0;
+        }
+      })();
+
       let dders = data.dders && ddersNum > 0 ? data.dders.join(",") : "";
       let ddersHash =
         data.subhash && ddersNum > 0 ? data.subhash.join(",") : "";
