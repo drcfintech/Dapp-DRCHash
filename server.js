@@ -628,7 +628,7 @@ let getUploadData = data => {
       let ddersHash =
         data.subhash && ddersNum > 0 ? data.subhash.join(",") : "";
       return web3.eth.abi.encodeParameters(
-        ["string", "string", "string", "string", "uint256"],
+        ["string", "string", "uint256", "string", "string"],
         [
           safeStr(data.operator),
           safeStr(data.ddname),
