@@ -542,25 +542,25 @@ let hashContract = contractType => {
     case 2:
       return {
         contract: FileHashContract,
-        contractAT: FileHash_contractAT
+          contractAT: FileHash_contractAT
       };
     case 3:
     case 4:
       return {
         contract: DDHashContract,
-        contractAT: DDHash_contractAT
+          contractAT: DDHash_contractAT
       };
     case 5:
     case 6:
     case 7:
       return {
         contract: MediaHashContract,
-        contractAT: MediaHash_contractAT
+          contractAT: MediaHash_contractAT
       };
     default:
       return {
         contract: HashDataContract,
-        contractAT: HashData_contractAT
+          contractAT: HashData_contractAT
       };
   }
 };
@@ -616,9 +616,9 @@ let getUploadData = data => {
       console.log("subhash: ", data.subhash);
       let ddersNum = (() => {
         if (data.dders && data.subhash) {
-          return data.dders.length < data.subhash.length
-            ? data.dders.length
-            : data.subhash.length;
+          return data.dders.length < data.subhash.length ?
+            data.dders.length :
+            data.subhash.length;
         } else {
           return 0;
         }
@@ -665,23 +665,19 @@ var Actions = {
   start: function() {
     HashDataContract = new web3.eth.Contract(
       HashData_contractABI,
-      HashData_contractAT,
-      {}
+      HashData_contractAT, {}
     );
     FileHashContract = new web3.eth.Contract(
       FileHash_contractABI,
-      FileHash_contractAT,
-      {}
+      FileHash_contractAT, {}
     );
     MediaHashContract = new web3.eth.Contract(
       MediaHash_contractABI,
-      MediaHash_contractAT,
-      {}
+      MediaHash_contractAT, {}
     );
     DDHashContract = new web3.eth.Contract(
       DDHash_contractABI,
-      DDHash_contractAT,
-      {}
+      DDHash_contractAT, {}
     );
     HashDataContract.setProvider(web3Utils.currentProvider());
     FileHashContract.setProvider(web3Utils.currentProvider());
@@ -777,7 +773,7 @@ var Actions = {
           log.saveLog(
             operation[0],
             new Date().toLocaleString(),
-            requestObject,
+            requestObject.roothash,
             0,
             0,
             responceData.evmError
@@ -794,7 +790,7 @@ var Actions = {
           log.saveLog(
             operation[0],
             new Date().toLocaleString(),
-            requestObject,
+            requestObject.roothash,
             0,
             0,
             responceData.hashAlreadyInserted
@@ -1072,7 +1068,7 @@ var Actions = {
             console.log(blockHigh - queryData[i].blockNubmber);
             console.log(
               totalConfirmNumber -
-                (blockHigh - returnObject.records[i].blockNumber)
+              (blockHigh - returnObject.records[i].blockNumber)
             );
             if (
               blockHigh - returnObject.records[i].blockNumber >
@@ -1343,8 +1339,7 @@ app.post("/selectHash", function(req, res) {
   });
 });
 
-app.listen(
-  {
+app.listen({
     // host: serverConfig.serverHost,
     port: serverConfig.serverPort
   },
