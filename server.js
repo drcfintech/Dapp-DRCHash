@@ -931,34 +931,39 @@ var Actions = {
       console.log("get Tx blocks return object currently is: ", returnObject);
 
       const getBlockNum = txHash => {
-        return new Promise((resolve, reject) => {
-          let iCount = 0;
-          const handle = setInterval(() => {
-            iCount += 1;
-            web3.eth.getTransaction(txHash, (error, result) => {
-              console.log("get block tx hash is: ", txHash);
-              if (error) {
-                clearInterval(handle);
-                reject(error);
-              }
+        if (txHash) {
+          return new Promise((resolve, reject) => {
+            let iCount = 0;
+            const handle = setInterval(() => {
+              iCount += 1;
+              web3.eth.getTransaction(txHash, (error, result) => {
+                console.log("get block tx hash is: ", txHash);
+                if (error) {
+                  clearInterval(handle);
+                  reject(error);
+                }
 
-              if (result) {
-                clearInterval(handle);
-                console.log("block number: ", result.blockNumber);
-                return resolve(result.blockNumber);
-              }
+                if (result) {
+                  clearInterval(handle);
+                  console.log("block number: ", result.blockNumber);
+                  return resolve(result.blockNumber);
+                }
 
-              if (iCount > 2) {
-                clearInterval(handle);
-                console.log("cannot get block number this time...");
-                return resolve(null);
-              }
-            });
-          }, 5000);
-        }).catch(err => {
-          console.log("catch error when getBlockNum: ", err);
-          return "error"; // set the block number as 'error'
-        });
+                if (iCount > 2) {
+                  clearInterval(handle);
+                  console.log("cannot get block number this time...");
+                  return resolve(null);
+                }
+              });
+            }, 5000);
+          }).catch(err => {
+            console.log("catch error when getBlockNum: ", err);
+            return "error"; // set the block number as 'error'
+          });
+        } else {
+          console.log("get block tx hash is: ", txHash); // undefined txHash
+          return null;
+        }
       };
 
       const getTxsBlockNumbers = async (returnOneObject, queryObj) => {
