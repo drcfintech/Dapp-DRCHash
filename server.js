@@ -253,6 +253,12 @@ let retrySendTransaction = (rawTx, origTxHash) => {
        * the base gasPrice is not correct, so retry another base gasPrice.
        */
       let iCountInternal = 0;
+      console.log("current EVM gasPrice: ", values[0]);
+      let tempGasPrice = web3.utils.fromWei(
+        web3.utils.toBN(newRawTx.gasPrice), "gwei"
+      );
+      console.log("original TX gasPrice: ", tempGasPrice);
+      let retryGasPrice = tempGasPrice > values[0] ? tempGasPrice : values[0];
       const handleInternal = setInterval(() => {
         iCountInternal++;
         if (iCountInternal > intervals.retryTxTimes) {
@@ -261,9 +267,9 @@ let retrySendTransaction = (rawTx, origTxHash) => {
             "the base gasPrice is not appropriate, need to change..."
           );
         } else {
-          console.log("current retry gasPrice: ", values[0]);
+          console.log("current retry gasPrice: ", retryGasPrice);
           newRawTx.gasPrice = web3.utils.toHex(
-            web3.utils.toWei(values[0].toString(), "gwei")
+            web3.utils.toWei(retryGasPrice.toString(), "gwei")
           );
           let tx = new Tx(newRawTx);
 
@@ -325,7 +331,7 @@ let retrySendTransaction = (rawTx, origTxHash) => {
               }
             });
 
-          values[0] = (values[0] * gasPricePromote.GT_10).toFixed(2); // add 15% gasPrice
+          retryGasPrice = (retryGasPrice * gasPricePromote.GT_10).toFixed(2); // add 15% gasPrice
         }
       }, intervals.retryTx);
     });
