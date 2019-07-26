@@ -101,7 +101,7 @@ const getGasLimit = callObject => {
           clearInterval(handle);
           console.log("estimated gasLimit  ", result);
           var finalResult = Math.round(result * 1.1);
-          if (finalResult > 6700000) finalResult = 6700000;
+          if (finalResult > 6721975) finalResult = 6721975;
           resolve(finalResult);
         }
       });

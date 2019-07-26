@@ -9,11 +9,11 @@ const contractConfig = require('../config/compileContract.json');
 // let contractConfig = JSON.parse(fs.readFileSync(contractConfigFile));
 console.log(contractConfig);
 const gasPricePromote = {
-    GT_30: 1.25,
-    GT_20: 1.2,
-    GT_10: 1.15,
-    GT_3: 1.12,
-    DEFAULT: 1.1
+  GT_30: 1.25,
+  GT_20: 1.2,
+  GT_10: 1.15,
+  GT_3: 1.12,
+  DEFAULT: 1.1
 };
 // var contractNum = contractConfig.number;
 
@@ -24,15 +24,15 @@ const gasPricePromote = {
 // }
 
 const infura_url = {
-    mainnet: "https://mainnet.infura.io/v3/",
-    ropsten: "https://ropsten.infura.io/v3/",
-    rinkeby: "https://rinkeby.infura.io/v3/"
+  mainnet: "https://mainnet.infura.io/v3/",
+  ropsten: "https://ropsten.infura.io/v3/",
+  rinkeby: "https://rinkeby.infura.io/v3/"
 };
 
 var web3 = new Web3(
-    new Web3.providers.HttpProvider(
-        infura_url.mainnet + walletConfig.infuraAPIkey
-    )
+  new Web3.providers.HttpProvider(
+    infura_url.mainnet + walletConfig.infuraAPIkey
+  )
 );
 
 // const getGasPrice = () => {
@@ -55,99 +55,125 @@ var web3 = new Web3(
 // };
 
 const getGasPrice = () => {
-    return new Promise((resolve, reject) => {
-            const handle = setInterval(() => {
-                web3.eth.getGasPrice((error, result) => {
-                    if (error) {
-                        clearInterval(handle);
-                        reject(error);
-                    }
-                    //resolve(web3.utils.toHex(result));
-                    if (result) {
-                        clearInterval(handle);
+  return new Promise((resolve, reject) => {
+      const handle = setInterval(() => {
+        web3.eth.getGasPrice((error, result) => {
+          if (error) {
+            clearInterval(handle);
+            reject(error);
+          }
+          //resolve(web3.utils.toHex(result));
+          if (result) {
+            clearInterval(handle);
 
-                        let gasPrice = web3.utils.fromWei(result, "gwei");
-                        console.log('gasPrice  ', gasPrice + 'gwei');
-                        if (gasPrice >= 30) gasPrice *= gasPricePromote.GT_30;
-                        else if (gasPrice >= 20) gasPrice *= gasPricePromote.GT_20;
-                        else if (gasPrice >= 10) gasPrice *= gasPricePromote.GT_10;
-                        else if (gasPrice >= 3) gasPrice *= gasPricePromote.GT_3;
-                        else gasPrice *= gasPricePromote.DEFAULT;
+            let gasPrice = web3.utils.fromWei(result, "gwei");
+            console.log('gasPrice  ', gasPrice + 'gwei');
+            if (gasPrice >= 30) gasPrice *= gasPricePromote.GT_30;
+            else if (gasPrice >= 20) gasPrice *= gasPricePromote.GT_20;
+            else if (gasPrice >= 10) gasPrice *= gasPricePromote.GT_10;
+            else if (gasPrice >= 3) gasPrice *= gasPricePromote.GT_3;
+            else gasPrice *= gasPricePromote.DEFAULT;
 
-                        // resolve(web3.utils.toHex(Math.round(result)));
-                        resolve(gasPrice.toFixed(2));
-                    }
-                });
-            }, 5000);
-        })
-        .catch(err => {
-            console.log("catch error when getGasPrice");
-            return new Promise.reject(err);
+            // resolve(web3.utils.toHex(Math.round(result)));
+            resolve(gasPrice.toFixed(2));
+          }
         });
+      }, 5000);
+    })
+    .catch(err => {
+      console.log("catch error when getGasPrice");
+      return new Promise.reject(err);
+    });
 };
 
 
 // 获取estimated gasLimit
 const getGasLimit = callObject => {
-    return new Promise((resolve, reject) => {
-        const handle = setInterval(() => {
-            web3.eth.estimateGas(callObject, (error, result) => {
-                if (error /*&& !error.message.includes('gas required exceeds allowance')*/ ) {
-                    clearInterval(handle);
-                    reject(error);
-                }
-                //resolve(web3.utils.toHex(result));
-                if (result) {
-                    clearInterval(handle);
-                    console.log("estimated gasLimit  ", result);
-                    var finalResult = Math.round(result * 1.1);
-                    if (finalResult > 6700000) finalResult = 6700000;
-                    resolve(finalResult);
-                }
-            });
-        }, 5000);
-    }).catch(err => {
-        console.log("catch error when getGasLimit");
-        return new Promise.reject(err);
-    });
+  return new Promise((resolve, reject) => {
+    const handle = setInterval(() => {
+      web3.eth.estimateGas(callObject, (error, result) => {
+        if (error /*&& !error.message.includes('gas required exceeds allowance')*/ ) {
+          clearInterval(handle);
+          reject(error);
+        }
+        //resolve(web3.utils.toHex(result));
+        if (result) {
+          clearInterval(handle);
+          console.log("estimated gasLimit  ", result);
+          var finalResult = Math.round(result * 1.1);
+          if (finalResult > 6721975) finalResult = 6721975;
+          resolve(finalResult);
+        }
+      });
+    }, 5000);
+  }).catch(err => {
+    console.log("catch error when getGasLimit");
+    return new Promise.reject(err);
+  });
 };
 
-const processContract = async function (contract) {
-    // var realPrice;
-    // var realGasLimit;
-    console.log(contract.name);
-    var contractPath = '../build/contracts/' + contract.name + '.json';
-    var contractInstance = require(contractPath);
-    let callObject = {
-        data: contractInstance.bytecode
-    };
-    var realPrice = await getGasPrice();
-    console.log("using gasPrice: ", realPrice + "gwei");
-    var realGasLimit = await getGasLimit(callObject);
-    console.log("using gasLimit: ", realGasLimit);
+const processContract = async function(contract) {
+  // var realPrice;
+  // var realGasLimit;
+  console.log(contract.name);
+  var contractPath = '../build/contracts/' + contract.name + '.json';
+  var contractInstance = require(contractPath);
+  //   console.log(contractInstance.bytecode);
+  let callObject = {
+    data: contractInstance.bytecode
+  };
+  var realPrice = await getGasPrice();
+  console.log("using gasPrice: ", realPrice + "gwei");
+  var realGasLimit = await getGasLimit(callObject);
+  console.log("using gasLimit: ", realGasLimit);
 
-    contractConfig.gasPrice = web3.utils.toWei(realPrice.toString(), "gwei");
-    contract.requiredGasLimit = realGasLimit;
+  contractConfig.gasPrice = web3.utils.toWei(realPrice.toString(), "gwei");
+  contract.requiredGasLimit = realGasLimit;
 };
 
 console.log(contractConfig.contracts);
+let migrateFileTemplate = path.resolve(__dirname, '../migrations/deploy_contracts.js.template');
+let migrateFileContent = fs.readFileSync(migrateFileTemplate, 'utf8');
+// console.log(migrateFileContent);
+let lines = migrateFileContent.split(/\r?\n/);
+let eol = (process.platform === 'win32' ? '\r\n' : '\n');
+let filePathSplit = (process.platform === 'win32' ? '\\' : '/');
 
-let promises = contractConfig.contracts.map((contract) => {
-    return processContract(contract);
+const processDeployFile = async function(index) {
+  lines[1] = "const deployIndex = " + index + ";";
+  migrateFileContent = lines.join(eol);
+  let migrateFile = path.resolve(__dirname, '../migrations/') +
+    filePathSplit +
+    (index + 1) +
+    '_deploy_contracts.js';
+  console.log(migrateFile);
+  await fs.writeFile(migrateFile, migrateFileContent, (err) => {
+    if (err) {
+      console.log(err);
+      throw err;
+    }
+  });
+};
+
+let promises = contractConfig.contracts.map((contract, ind) => {
+  if (ind > 0) {
+    processDeployFile(ind);
+  }
+  return processContract(contract);
 });
 
 Promise.all(promises)
-    .then(values => {
-        console.log('current contract config content is ', contractConfig);
-        let contractConfigFile = path.resolve(__dirname, '../config/compileContract.json');
-        fs.writeFileSync(contractConfigFile, JSON.stringify(contractConfig));
-    })
-    .catch(e => {
-        if (e) {
-            console.log("evm error", e);
-            return;
-        }
-    });
+  .then(values => {
+    console.log('current contract config content is ', contractConfig);
+    let contractConfigFile = path.resolve(__dirname, '../config/compileContract.json');
+    fs.writeFileSync(contractConfigFile, JSON.stringify(contractConfig));
+  })
+  .catch(e => {
+    if (e) {
+      console.log("evm error", e);
+      return;
+    }
+  });
 
 
 
